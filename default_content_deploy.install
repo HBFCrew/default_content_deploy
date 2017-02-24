@@ -1,0 +1,32 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the default content deploy.
+ */
+
+
+
+function default_content_deploy_update_8001() {
+  // \Drupal::service('default_content_deploy.deploy')->importFiles('');
+  if (!\Drupal::isConfigSyncing()) {
+    \Drupal::service('default_content.manager')->importContent('default_content_deploy');
+  }
+}
+
+function default_content_deploy_update_8002() {
+  // \Drupal::service('default_content_deploy.deploy')->importFiles('');
+  if (!\Drupal::isConfigSyncing()) {
+    \Drupal::service('default_content.manager')->importContent('default_content_deploy');
+  }
+}
+
+function default_content_deploy_update_8003() {
+  // \Drupal::service('default_content_deploy.deploy')->importFiles('');
+  if (!\Drupal::isConfigSyncing()) {
+    \Drupal::service('default_content.manager')->importContent('default_content_deploy');
+
+  }
+}
+
+// Continue with default_content_deploy_update_8007

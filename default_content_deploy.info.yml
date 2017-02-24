@@ -1,0 +1,7 @@
+name: 'Default content deploy'
+type: module
+description: 'Default Content Importer'
+package: Web services
+core: 8.x
+dependencies:
+  - default_content

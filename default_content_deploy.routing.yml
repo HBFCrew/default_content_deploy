@@ -1,0 +1,6 @@
+default_content_deploy.sandbox:
+  path: '/admin/default_content_deploy/sandbox'
+  defaults:
+    _controller: 'Drupal\default_content_deploy\Controller\SandboxController::sandbox'
+  requirements:
+    _access: 'TRUE'
