@@ -33,6 +33,11 @@ Requirements
 @todo
 
 
+Install
+-------
+Type `composer require jakubhnilicka/default-content-deploy` in your project root
+
+
 Drush commands
 --------------
 
