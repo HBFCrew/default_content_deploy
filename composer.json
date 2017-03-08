@@ -1,0 +1,20 @@
+{
+  "name": "jakubhnilicka/default-content-deploy",
+  "type": "drupal-module",
+  "description": "Drupal 8 module for deploying content in *.yml files. Sponsored by: HBF s.r.o., http://hbf.sk",
+  "minimum-stability": "dev",
+  "authors": [
+    {
+      "name": "Martin Klíma"
+    },
+    {
+      "name": "Jakub Hnilička"
+    },
+    {
+      "name": "Radoslav Terezka"
+    }
+  ],
+  "require": {
+    "drupal/default_content": "dev-8.x-1.x"
+  }
+}
