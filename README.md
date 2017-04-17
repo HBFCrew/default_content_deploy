@@ -27,10 +27,11 @@ Requirements
 ------------
 **Modules**
 - default_content (http://link)
-- file_entity (if you need export files)
+- file_entity (if you need export/import files, f.e. images, attachments)
 
 **Sites synchronization settings**
-@todo
+For successful syncing content between sites, you need to have identical UUIDs for
+Admin user and Anonymous user. @see drush dcd-sync command.
 
 
 Install
@@ -43,15 +44,16 @@ Drush commands
 
 **drush dcde**
 
-Exports a single entity or group of entities to default content deploy module
+Exports a single entity or group of entities to default content deploy module 
+(without any reference).
 
 Note:
 - Don't use options *--entity_id* and *--bundle* together.
 
 Examples:
 
-    // Export all nodes
-    drush dcder node
+    //Export all nodes
+    drush dcde node
     
     //Export all nodes with content-type company
     drush dcde node --bundle=company
@@ -70,7 +72,9 @@ Examples:
     
 
 **drush dcder**
-Identical options as in drush dcde
+
+Exports a single entity or group of entities with all references.
+Identical options as in drush dcde.
 
     drush dcder node
     drush dcder node --skip_entities=7,8
@@ -79,15 +83,34 @@ Identical options as in drush dcde
     drush dcder node --entity_id=8
     drush dcder node --entity_id=7,8
 
+
+**drush dcdes**
+
+Exports a whole site content to default content deploy module.
+You can skip several entities by their type.
+
+@todo Specify default implemented types. 
+
+    drush dcdes --add_entity_type=media --skip_entity_type=file,node
+    
+    
+**drush dcdea**
+
+Exports path aliases.
+
+...
+@todo
+
+
+**drush dcdia**
+
+Import path aliases from alias/url_aliases.json.
+
+
 **drush dcdi**
 
 Import all the content defined in a module.
 
-**drush dcdes**
-
-    drush dcdes --add_entity_type=media --skip_entity_type=file,node
-...
-@todo
 
 **drush dcd-sync**
 
@@ -136,7 +159,7 @@ Example for Nginx host config:
 
 Maintainers
 -----------
-- Martin Klíma, (user profile)
+- Martin Klíma, (https://www.drupal.org/u/martin_klima), martin.klima@hqis.cz
 - Jakub Hnilička,
 - Radoslav Terezka,
 
