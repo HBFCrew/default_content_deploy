@@ -5,7 +5,9 @@
  * Install, update and uninstall functions for the default content deploy.
  */
 
-
+function default_content_deploy_install() {
+  _prepare_content_directory();
+}
 
 function default_content_deploy_update_8001() {
   // \Drupal::service('default_content_deploy.deploy')->importFiles('');
@@ -29,4 +31,13 @@ function default_content_deploy_update_8003() {
   }
 }
 
-// Continue with default_content_deploy_update_8007
+function default_content_deploy_update_8007() {
+  _prepare_content_directory();
+}
+
+function _prepare_content_directory() {
+  $settings = \Drupal::service('settings');
+  $hash_salt = $settings->getHashSalt();
+  $path = 'public://content_' . $hash_salt;
+  file_prepare_directory($path, FILE_CREATE_DIRECTORY);
+}
