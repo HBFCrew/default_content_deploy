@@ -3,41 +3,31 @@
 namespace Drupal\default_content_deploy;
 
 use Drupal\Component\Serialization\Json;
-use Drupal\Core\Config\Config;
-use Drupal\Core\Database\Database;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Entity\EntityRepositoryInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Extension\InfoParserInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
-use Drupal\default_content\DefaultContentManager;
 use Drupal\default_content\Event\DefaultContentEvents;
 use Drupal\default_content\Event\ImportEvent;
-use Drupal\rest\LinkManager\LinkManagerInterface;
-use Drupal\rest\Plugin\Type\ResourcePluginManager;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\Serializer\Serializer;
 
 /**
  * A service for handling import of default content.
  */
-class DefaultContentDeploy extends DefaultContentManager {
+class DefaultContentDeploy {
 
   private $database;
 
-  public function __construct(
-    Serializer $serializer,
-    ResourcePluginManager $resource_plugin_manager,
-    $current_user,
-    EntityTypeManagerInterface $entity_manager,
-    EntityRepositoryInterface $entity_repository,
-    LinkManagerInterface $link_manager,
-    EventDispatcherInterface $event_dispatcher,
-    ModuleHandlerInterface $module_handler,
-    InfoParserInterface $info_parser
-  ) {
-    parent::__construct($serializer, $resource_plugin_manager, $current_user, $entity_manager, $entity_repository, $link_manager, $event_dispatcher, $module_handler, $info_parser);
+  private $importer;
+
+  private $exporter;
+
+  private $settings;
+
+  private $entityTypeManager;
+
+  public function __construct() {
     $this->database = \Drupal::database();
+    $this->importer = \Drupal::service('default_content.importer');
+    $this->exporter = \Drupal::service('default_content.exporter');
+    $this->settings = \Drupal::service('settings');
+    $this->entityTypeManager = \Drupal::service('entity_type.manager');
   }
 
   public function sandbox() {
@@ -235,24 +225,32 @@ class DefaultContentDeploy extends DefaultContentManager {
     return $this->serializer;
   }
 
-  public function export($entity_type_id, $entity_id, $bundle, $skip_entities = array()) {
-    $folder = drupal_get_path('module', 'default_content_deploy') . '/content';
+  private function getContentFolder() {
+    global $config_directories;
+    if (isset($config_directories) && isset($config_directories['content'])) {
+      return $config_directories['content'];
+    }
+    else {
+      $hash_salt = $this->settings->getHashSalt();
+      return 'public://content_' . $hash_salt;
+    }
+  }
 
+  public function export($entity_type_id, $entity_id, $bundle, $skip_entities = NULL) {
+    $folder = $this->getContentFolder();
+    $exportedEntities = array();
+    $exportedEntitieIds = array();
     if (!empty($skip_entities)) {
       $skip_entities = explode(',', $skip_entities);
     }
-    $count = 0;
 
     // Export by entity_id.
     if (!is_null($entity_id)) {
       $entity_ids = explode(',', $entity_id);
       foreach ($entity_ids as $entity_id) {
         if (is_numeric($entity_id)) {
-          $path = $folder . '/' . $entity_type_id;
-          $save = $this->saveSingleFile($entity_type_id, $entity_id, $path);
-          if ($save != FALSE) {
-            $count++;
-          }
+          //$path = $folder . '/' . $entity_type_id;
+          $exportedEntitieIds[] = $entity_id;
         }
       }
     }
@@ -272,19 +270,22 @@ class DefaultContentDeploy extends DefaultContentManager {
       }
       $entity_ids = $query->execute();
 
-      $path = $folder . '/' . $entity_type_id;
-
       foreach ($entity_ids as $entity_id) {
         if (!in_array($entity_id, $skip_entities)) {
-          $save = $this->saveSingleFile($entity_type_id, $entity_id, $path);
-          if ($save != FALSE) {
-            $count++;
-          }
+          $exportedEntitieIds[] = $entity_id;
         }
       }
     }
+    /** @var \Drupal\Core\Entity\EntityStorageInterface $storage */
+    $storage = $this->entityTypeManager->getStorage($entity_type_id);
+    $entities = $storage->loadMultiple($exportedEntitieIds);
 
-    return $count;
+    foreach ($entities as $entity) {
+      $exportedEntities[$entity_type_id][$entity->uuid()] = $this->exporter->exportContent($entity_type_id, $entity->id());
+    }
+
+    $this->exporter->writeDefaultContent($exportedEntities, $folder);
+    return count($exportedEntities);
   }
 
   public function exportWithReferences($entity_type_id, $entity_id, $bundle, $skip_entities = array(), $skip_core_users = TRUE) {
