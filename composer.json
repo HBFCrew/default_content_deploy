@@ -1,7 +1,7 @@
 {
   "name": "jakubhnilicka/default-content-deploy",
   "type": "drupal-module",
-  "description": "Drupal 8 module for deploying content in *.yml files. Sponsored by: HBF s.r.o., http://hbf.sk",
+  "description": "Drupal 8 module for deploying content in *.json files. Sponsored by: HBF s.r.o., http://hbf.sk",
   "minimum-stability": "dev",
   "authors": [
     {
