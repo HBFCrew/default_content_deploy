@@ -114,21 +114,15 @@ class Exporter extends DefaultContentDeployBase {
         $count[$entityType] = $exportedEntities;
       }
     }
-    $this->exportUrlAliases();
 
     return $count;
   }
 
   /**
    * Export url aliases in single json file under alias folder.
-   *
-   * @return int|bool
-   *   Return number of exported aliases or FALSE.
    */
   public function exportUrlAliases() {
-    $folder = $this->getContentFolder() . '/alias';
-    $query = $this->database->select('url_alias', 'aliases')
-      ->fields('aliases', []);
+    $query = $this->database->select('url_alias', 'aliases')->fields('aliases', []);
     $data = $query->execute();
     $results = $data->fetchAll(\PDO::FETCH_OBJ);
     $aliases = [];
@@ -139,18 +133,30 @@ class Exporter extends DefaultContentDeployBase {
         'langcode' => $row->langcode,
       ];
     }
-    $json = JSON::encode($aliases);
-    $save = file_put_contents($folder . '/url_aliases.json', $json);
-    if ($save != FALSE) {
-      return count($aliases);
-    }
-    else {
-      return FALSE;
-    }
+    $serializedAliases = JSON::encode($aliases);
+
+    $this->exporter->writeDefaultContent(['aliases' => ['aliases' => $serializedAliases]], $this->getContentFolder());
+
+    return count($aliases);
   }
 
+  /**
+   * Get entity ids.
+   *
+   * @param string $entityType
+   *   Entity Type.
+   * @param string $entityBundle
+   *   Entity ID.
+   * @param string $entityIds
+   *   Entity Bundle.
+   * @param string $skipEntities
+   *   Entities to skip.
+   *
+   * @return array
+   *   Return array of entitiy ids.
+   */
   protected function getEntityIdsForExport($entityType, $entityBundle, $entityIds, $skipEntities) {
-    $exportedEntities = [];
+    // @TODO: Check if entity type and bundle exists.
     $exportedEntityIds = [];
 
     // Export by bundle.

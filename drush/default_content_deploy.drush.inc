@@ -184,19 +184,15 @@ function drush_default_content_deploy_export_site() {
 }
 
 /**
- * @todo Comment code.
+ * Exports url aliases.
+ *
+ * @example drush dcdea
  */
 function drush_default_content_deploy_export_aliases() {
-  $manager = \Drupal::service('default_content_deploy.deploy');
-  $save = $manager->exportAliases();
+  $exporter = \Drupal::service('default_content_deploy.exporter');
+  $aliases = $exporter->exportUrlAliases();
 
-  if ($save != FALSE) {
-    drush_log(t('Exported @count aliases.', ['@count' => count($save)]), 'success');
-  }
-  else {
-    drush_log(t('Unable to export aliases.'), 'error');
-    drush_log(t('Check if default_content_module/alias directory exists.'), 'error');
-  }
+  drush_log(t('Exported @count aliases.', ['@count' => $aliases]), 'success');
 }
 
 /**
