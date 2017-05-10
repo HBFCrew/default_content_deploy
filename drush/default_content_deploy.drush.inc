@@ -122,17 +122,12 @@ function drush_default_content_deploy_import() {
  * @todo Comment code.
  */
 function drush_default_content_deploy_export($entity_type_id) {
-  $entity_id = drush_get_option('entity_id');
-  $bundle = drush_get_option('bundle');
-  $skip_entities = drush_get_option('skip_entities', array());
+  $entity_ids = drush_get_option('entity_id', '');
+  $entity_bundles = drush_get_option('bundle', '');
+  $skip_entities = drush_get_option('skip_entities', '');
 
-  if (!is_null($entity_id) && !is_null($bundle)) {
-    drush_log(t('You cannot use entity_id together with bundle'), 'error');
-    exit;
-  }
-
-  $manager = \Drupal::service('default_content_deploy.deploy');
-  $count = $manager->export($entity_type_id, $entity_id, $bundle, $skip_entities = array());
+  $manager = \Drupal::service('default_content_deploy.exporter');
+  $count = $manager->export($entity_type_id, $entity_bundles, $entity_ids, $skip_entities);
 
   drush_log(t('Exported @count entities.', ['@count' => $count]), 'status');
 }

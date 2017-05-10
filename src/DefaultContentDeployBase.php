@@ -22,12 +22,15 @@ class DefaultContentDeployBase {
 
   protected $entityTypeManager;
 
+  protected $serializer;
+
   public function __construct() {
     $this->database = \Drupal::database();
     $this->importer = \Drupal::service('default_content.importer');
     $this->exporter = \Drupal::service('default_content.exporter');
     $this->settings = \Drupal::service('settings');
     $this->entityTypeManager = \Drupal::service('entity_type.manager');
+    $this->serializer = \Drupal::service('serializer');
   }
 
   public function sandbox() {

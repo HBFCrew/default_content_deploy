@@ -9,66 +9,75 @@ use Drupal\Component\Serialization\Json;
  */
 class Exporter extends DefaultContentDeployBase {
 
+  // Variables delimiter.
+  const DELIMITER = ',';
+
   /**
-   * Export entites by entity type.
+   * Export entites by entity type, id or bundle.
    *
-   * @param      $entity_type_id
-   * @param      $entity_id
-   * @param      $bundle
-   * @param null $skip_entities
+   * @param string $entityType
+   *   Entity Type.
+   * @param int $entityIds
+   *   Entity ID.
+   * @param string $entityBundle
+   *   Entity Bundle.
+   * @param null|array $skipEntities
+   *   Entities to skip.
    *
    * @return int
+   *   Number of exported entities.
    */
-  public function export($entity_type_id, $entity_id, $bundle, $skip_entities = NULL) {
-    $folder = $this->getContentFolder();
-    $exportedEntities = array();
-    $exportedEntitieIds = array();
-    if (!empty($skip_entities)) {
-      $skip_entities = explode(',', $skip_entities);
-    }
+  public function export($entityType, $entityBundle = '', $entityIds = '', $skipEntities = '') {
+    $exportedEntities = [];
+    $exportedEntityIds = [];
 
-    // Export by entity_id.
-    if (!is_null($entity_id)) {
-      $entity_ids = explode(',', $entity_id);
-      foreach ($entity_ids as $entity_id) {
-        if (is_numeric($entity_id)) {
-          //$path = $folder . '/' . $entity_type_id;
-          $exportedEntitieIds[] = $entity_id;
-        }
-      }
-    }
     // Export by bundle.
-    else {
-      $query = \Drupal::entityQuery($entity_type_id);
-      if (!is_null($bundle)) {
-        $bundles = explode(',', $bundle);
-        $bundle_type = 'type';
-        if ($entity_type_id == 'taxonomy_term') {
-          $bundle_type = 'vid';
-        }
-        elseif ($entity_type_id == 'menu_link_content') {
-          $bundle_type = 'menu_name';
-        }
-        $query->condition($bundle_type, $bundles, 'IN');
+    if (!empty($entityBundle)) {
+      $query = \Drupal::entityQuery($entityType);
+      $bundles = explode(self::DELIMITER, $entityBundle);
+      $bundleType = 'type';
+      if ($entityType == 'taxonomy_term') {
+        $bundleType = 'vid';
       }
-      $entity_ids = $query->execute();
-
-      foreach ($entity_ids as $entity_id) {
-        if (!in_array($entity_id, $skip_entities)) {
-          $exportedEntitieIds[] = $entity_id;
-        }
+      elseif ($entityType == 'menu_link_content') {
+        $bundleType = 'menu_name';
       }
-    }
-    /** @var \Drupal\Core\Entity\EntityStorageInterface $storage */
-    $storage = $this->entityTypeManager->getStorage($entity_type_id);
-    $entities = $storage->loadMultiple($exportedEntitieIds);
-
-    foreach ($entities as $entity) {
-      $exportedEntities[$entity_type_id][$entity->uuid()] = $this->exporter->exportContent($entity_type_id, $entity->id());
+      $query->condition($bundleType, $bundles, 'IN');
+      $entityIds = $query->execute();
+      $exportedEntityIds += $entityIds;
     }
 
-    $this->exporter->writeDefaultContent($exportedEntities, $folder);
-    return count($exportedEntities);
+    // Export by entity id.
+    if (!empty($entityId)) {
+      $entityIds = explode(self::DELIMITER, $entityIds);
+      $exportedEntityIds += $entityIds;
+    }
+
+    // Export by entity type if bundles and ids are empty.
+    if (empty($exportedEntityIds)) {
+      $query = \Drupal::entityQuery($entityType);
+      $entityIds = $query->execute();
+      $exportedEntityIds += $entityIds;
+    }
+
+    // Explode skip entities.
+    $skipEntities = explode(self::DELIMITER, $skipEntities);
+
+    // Diff entityIds against skipEntities.
+    $exportedEntityIds = array_diff($exportedEntityIds, $skipEntities);
+
+    // Serialize entities and get uuids for entities.
+    foreach ($exportedEntityIds as $entityId) {
+      $exportedEntity = $this->exporter->exportContent($entityType, $entityId);
+      $deseralizedEntity = $this->serializer->decode($exportedEntity, 'hal_json');
+      $uuid = $deseralizedEntity['uuid'][0]['value'];
+      $exportedEntities[$entityType][$uuid] = $exportedEntity;
+    }
+
+    // Export all entities to folder.
+    $this->exporter->writeDefaultContent($exportedEntities, $this->getContentFolder());
+
+    return count($exportedEntityIds);
   }
 
   /**
@@ -78,7 +87,7 @@ class Exporter extends DefaultContentDeployBase {
    * @param       $entity_id
    * @param       $bundle
    * @param array $skip_entities
-   * @param bool  $skip_core_users
+   * @param bool $skip_core_users
    *
    * @return int
    *   Return number of exported entities.
@@ -143,7 +152,7 @@ class Exporter extends DefaultContentDeployBase {
    * @return array|string
    *   Return number of exported entites grouped by entity type or path.
    */
-  public function exportSite($add_entity_type = array(), $skip_entity_type = array()) {
+  public function exportSite($add_entity_type = [], $skip_entity_type = []) {
     $folder = $this->getContentFolder();
     $count = [];
 
@@ -155,7 +164,7 @@ class Exporter extends DefaultContentDeployBase {
       $skip_entity_type = explode(',', $skip_entity_type);
     }
 
-    $defualt_entity_types = array(
+    $defualt_entity_types = [
       'block_content',
       'comment',
       'file',
@@ -165,7 +174,7 @@ class Exporter extends DefaultContentDeployBase {
       'user',
       'media',
       'paragraph',
-    );
+    ];
 
     $defualt_entity_types += array_unique(array_merge($defualt_entity_types, $add_entity_type));
     $available_entity_types = array_keys($this->entityTypeManager->getDefinitions());
@@ -203,7 +212,8 @@ class Exporter extends DefaultContentDeployBase {
    */
   public function exportUrlAliases() {
     $folder = $this->getContentFolder() . '/alias';
-    $query = $this->database->select('url_alias', 'aliases')->fields('aliases', []);
+    $query = $this->database->select('url_alias', 'aliases')
+      ->fields('aliases', []);
     $data = $query->execute();
     $results = $data->fetchAll(\PDO::FETCH_OBJ);
     $aliases = [];
