@@ -114,59 +114,72 @@ function drush_default_content_deploy_import() {
 
 
 /**
- * Exports a piece of content into the file.
+ * Exports entities by entity type, bundle and entity id.
+ *
+ * Entity bundles, ids and skip entities can be delimited by comma.
  *
  * @param string $entity_type_id
  *   The entity type ID.
  *
- * @todo Comment code.
+ * @example drush dcde node
+ * @example drush dcde node --bundle=page
+ * @example drush dcde node --bundle=page,article --entity_id=2,3,4
+ * @example drush dcde node --bundle=page,article --skip_entities=5,7
+ * @example drush dcde node --skip_entities=5,7
  */
 function drush_default_content_deploy_export($entity_type_id) {
   $entity_ids = drush_get_option('entity_id', '');
   $entity_bundles = drush_get_option('bundle', '');
   $skip_entities = drush_get_option('skip_entities', '');
 
-  $manager = \Drupal::service('default_content_deploy.exporter');
-  $count = $manager->export($entity_type_id, $entity_bundles, $entity_ids, $skip_entities);
+  $exporter = \Drupal::service('default_content_deploy.exporter');
+  $count = $exporter->export($entity_type_id, $entity_bundles, $entity_ids, $skip_entities);
 
-  drush_log(t('Exported @count entities.', ['@count' => $count]), 'status');
+  drush_log(t('Exported @count entities.', ['@count' => $count]), 'success');
 }
 
+/**
+ * Exports entities by entity type, bundle and entity id with all references.
+ *
+ * Entity bundles, ids and skip entities can be delimited by comma.
+ *
+ * @param string $entity_type_id
+ *   The entity type ID.
+ *
+ * @example drush dcder node
+ * @example drush dcder node --bundle=page
+ * @example drush dcder node --bundle=page,article --entity_id=2,3,4
+ * @example drush dcder node --bundle=page,article --skip_entities=5,7
+ * @example drush dcder node --skip_entities=5,7
+ */
 function drush_default_content_deploy_export_with_references($entity_type_id) {
-  $entity_id = drush_get_option('entity_id');
-  $bundle = drush_get_option('bundle');
+  $entity_ids = drush_get_option('entity_id', '');
+  $entity_bundles = drush_get_option('bundle', '');
   $skip_entities = drush_get_option('skip_entities', '');
-  $skip_core_users = drush_get_option('skip_core_users', TRUE);
 
-  if (!is_null($entity_id) && !is_null($bundle)) {
-    drush_log(t('You cannot use entity_id together with bundle'), 'error');
-    exit;
-  }
-
-  $manager = \Drupal::service('default_content_deploy.deploy');
-  $count = $manager->exportWithReferences($entity_type_id, $entity_id, $bundle, $skip_entities, $skip_core_users);
+  $exporter = \Drupal::service('default_content_deploy.exporter');
+  $count = $exporter->exportWithReferences($entity_type_id, $entity_bundles, $entity_ids, $skip_entities);
   drush_log(t('Exported @count entities with references.', ['@count' => $count]), 'success');
 }
 
 /**
- * Export defined site content.
+ * Exports whole site.
  *
- * @todo Comment code.
+ * Add entitytype and Skip entity type can be delimited by comma.
+ *
+ * @example drush dcdes node
+ * @example drush dcdes node --add_entity_type=collection,feedsource
+ * @example drush dcdes node --skip_entity_type=node
  */
 function drush_default_content_deploy_export_site() {
-  $add_entity_type = drush_get_option('add_entity_type', array());
-  $skip_entity_type = drush_get_option('skip_entity_type', array());
+  $add_entity_type = drush_get_option('add_entity_type', '');
+  $skip_entity_type = drush_get_option('skip_entity_type', '');
 
-  $manager = \Drupal::service('default_content_deploy.deploy');
-  $count = $manager->exportSite($add_entity_type, $skip_entity_type);
+  $exporter = \Drupal::service('default_content_deploy.exporter');
+  $count = $exporter->exportSite($add_entity_type, $skip_entity_type);
 
-  if (is_array($count)) {
-    foreach ($count as $entity => $value) {
-      drush_log(t('Exported @count entities @entity.', ['@count' => $value, '@entity' => $entity]), 'success');
-    }
-  }
-  else {
-    drush_log(t('Directory @path for export not created.', ['@path' => $count]), 'error');
+  foreach ($count as $entity => $value) {
+    drush_log(t('Exported @count entities @entity.', ['@count' => $value, '@entity' => $entity]), 'success');
   }
 }
 
