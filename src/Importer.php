@@ -2,9 +2,13 @@
 
 namespace Drupal\default_content_deploy;
 
+use Drupal\Component\Graph\Graph;
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\default_content\Event\DefaultContentEvents;
 use Drupal\default_content\Event\ImportEvent;
+use Drupal\user\EntityOwnerInterface;
+//use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * A service for handling import of default content.
@@ -15,10 +19,136 @@ class Importer extends DefaultContentDeployBase {
    * @var \Drupal\Core\Path\AliasStorage
    */
   protected $pathAliasStorage;
+  protected $accountSwitcher;
+  //protected $eventDispatcher;
+  protected $linkManager;
+  protected $scanner;
+  protected $linkDomain;
+
+  /**
+   * A list of vertex objects keyed by their link.
+   *
+   * Cloned!!!
+   *
+   * @var array
+   */
+  protected $vertexes = [];
+
+  /**
+   * The graph entries.
+   *
+   * Cloned!!!
+   *
+   * @var array
+   */
+  protected $graph = [];
 
   public function __construct() {
     parent::__construct();
     $this->pathAliasStorage = \Drupal::service('path.alias_storage');
+    $this->accountSwitcher = \Drupal::service('account_switcher');
+    //$this->eventDispatcher = \Drupal::service('event_dispatcher');
+    $this->linkManager = \Drupal::service('hal.link_manager');
+    $this->scanner = \Drupal::service('default_content.scanner');
+    $this->linkDomain = 'http://drupal.org';
+  }
+
+  public function importContent() {
+    $created = [];
+    $result_info = [
+      'processed' => 0,
+      'created'   => 0,
+      'updated'   => 0,
+      'skipped'   => 0,
+    ];
+    $folder = $this->getContentFolder();
+
+    if (file_exists($folder)) {
+      $root_user = $this->entityTypeManager->getStorage('user')->load(1);
+      $this->accountSwitcher->switchTo($root_user);
+      $file_map = [];
+      /** @var \Drupal\Core\Entity\EntityType $entity_type */
+      foreach ($this->entityTypeManager->getDefinitions() as $entity_type_id => $entity_type) {
+        $reflection = new \ReflectionClass($entity_type->getClass());
+        // We are only interested in importing content entities.
+        if ($reflection->implementsInterface(ConfigEntityInterface::class)) {
+          continue;
+        }
+        if (!file_exists($folder . '/' . $entity_type_id)) {
+          continue;
+        }
+        $files = $this->scanner->scan($folder . '/' . $entity_type_id);
+        print $folder;
+        print_r($files);
+        // Default content uses drupal.org as domain.
+        // @todo Make this use a uri like default-content:.
+        $this->linkManager->setLinkDomain($this->linkDomain);
+        // Parse all of the files and sort them in order of dependency.
+        foreach ($files as $file) {
+          $contents = $this->parseFile($file);
+          // Decode the file contents.
+          $decoded = $this->serializer->decode($contents, 'hal_json');
+          // Get the link to this entity.
+          $item_uuid = $decoded['uuid'][0]['value'];
+
+          // Throw an exception when this UUID already exists.
+          if (isset($file_map[$item_uuid])) {
+            // Reset link domain.
+            $this->linkManager->setLinkDomain(FALSE);
+            throw new \Exception(sprintf('Default content with uuid "%s" exists twice: "%s" "%s"', $item_uuid, $file_map[$item_uuid]->uri, $file->uri));
+          }
+
+          // Store the entity type with the file.
+          $file->entity_type_id = $entity_type_id;
+          // Store the file in the file map.
+          $file_map[$item_uuid] = $file;
+          // Create a vertex for the graph.
+          $vertex = $this->getVertex($item_uuid);
+          $this->graph[$vertex->id]['edges'] = [];
+          if (empty($decoded['_embedded'])) {
+            // No dependencies to resolve.
+            continue;
+          }
+          // Here we need to resolve our dependencies:
+          foreach ($decoded['_embedded'] as $embedded) {
+            foreach ($embedded as $item) {
+              $uuid = $item['uuid'][0]['value'];
+              $edge = $this->getVertex($uuid);
+              $this->graph[$vertex->id]['edges'][$edge->id] = TRUE;
+            }
+          }
+        }
+      }
+
+      // @todo what if no dependencies?
+      $sorted = $this->sortTree($this->graph);
+      foreach ($sorted as $link => $details) {
+        if (!empty($file_map[$link])) {
+          $file = $file_map[$link];
+          $entity_type_id = $file->entity_type_id;
+          $class = $this->entityTypeManager->getDefinition($entity_type_id)->getClass();
+          $contents = $this->parseFile($file);
+          /** @var \Drupal\Core\Entity\Entity $entity */
+          $entity = $this->serializer->deserialize($contents, $class, 'hal_json', ['request_method' => 'POST']);
+          $entity->enforceIsNew(TRUE);
+          // Ensure that the entity is not owned by the anonymous user.
+          if ($entity instanceof EntityOwnerInterface && empty($entity->getOwnerId())) {
+            $entity->setOwner($root_user);
+          }
+          $entity->save();
+          $created[$entity->uuid()] = $entity;
+        }
+      }
+      //$this->eventDispatcher->dispatch(DefaultContentEvents::IMPORT, new ImportEvent($created, $module));
+      $this->accountSwitcher->switchBack();
+    }
+    // Reset the tree.
+    $this->resetTree();
+    // Reset link domain.
+    $this->linkManager->setLinkDomain(FALSE);
+
+    // @todo Get results!
+    return $result_info;
   }
 
   /**
@@ -180,7 +310,7 @@ class Importer extends DefaultContentDeployBase {
           //kpr($saved_entity_log_info);
         }
       }
-      $this->eventDispatcher->dispatch(DefaultContentEvents::IMPORT, new ImportEvent($created, $module));
+      //$this->eventDispatcher->dispatch(DefaultContentEvents::IMPORT, new ImportEvent($created, $module));
     }
     // Reset the tree.
     $this->resetTree();
@@ -234,6 +364,64 @@ class Importer extends DefaultContentDeployBase {
     }
 
     return ['imported' => $count, 'skipped' => $skipped];
+  }
+
+
+  // Imported methods (cloned)
+
+  /**
+   * Parses content files.
+   *
+   * @param object $file
+   *   The scanned file.
+   *
+   * @return string
+   *   Contents of the file.
+   */
+  protected function parseFile($file) {
+    return file_get_contents($file->uri);
+  }
+
+  /**
+   * Resets tree properties.
+   */
+  protected function resetTree() {
+    $this->graph = [];
+    $this->vertexes = [];
+  }
+
+  /**
+   * Sorts dependencies tree.
+   *
+   * @param array $graph
+   *   Array of dependencies.
+   *
+   * @return array
+   *   Array of sorted dependencies.
+   */
+  protected function sortTree(array $graph) {
+    $graph_object = new Graph($graph);
+    $sorted = $graph_object->searchAndSort();
+    uasort($sorted, 'Drupal\Component\Utility\SortArray::sortByWeightElement');
+    return array_reverse($sorted);
+  }
+
+  /**
+   * Returns a vertex object for a given item link.
+   *
+   * Ensures that the same object is returned for the same item link.
+   *
+   * @param string $item_link
+   *   The item link as a string.
+   *
+   * @return object
+   *   The vertex object.
+   */
+  protected function getVertex($item_link) {
+    if (!isset($this->vertexes[$item_link])) {
+      $this->vertexes[$item_link] = (object) ['id' => $item_link];
+    }
+    return $this->vertexes[$item_link];
   }
 
 }

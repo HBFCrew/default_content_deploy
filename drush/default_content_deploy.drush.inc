@@ -206,7 +206,7 @@ function drush_default_content_deploy_export_aliases() {
 function drush_default_content_deploy_import() {
   /** @var \Drupal\default_content_deploy\Importer $importer */
   $importer = \Drupal::service('default_content_deploy.importer');
-  $result_info = $importer->import();
+  $result_info = $importer->importContent();
   $importer->importUrlAliases();
 
   // Display results.
