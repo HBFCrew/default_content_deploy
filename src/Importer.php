@@ -3,7 +3,6 @@
 namespace Drupal\default_content_deploy;
 
 use Drupal\Component\Serialization\Json;
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\default_content\Event\DefaultContentEvents;
 use Drupal\default_content\Event\ImportEvent;
 
@@ -12,6 +11,9 @@ use Drupal\default_content\Event\ImportEvent;
  */
 class Importer extends DefaultContentDeployBase {
 
+  /**
+   * @var \Drupal\Core\Path\AliasStorage
+   */
   protected $pathAliasStorage;
 
   public function __construct() {
@@ -220,17 +222,19 @@ class Importer extends DefaultContentDeployBase {
     $path_alias_storage = $this->pathAliasStorage;
     $count = 0;
     $skipped = 0;
-    $file = $this->getContentFolder() . '/alias/url_aliases.json';
-    $aliases = file_get_contents($file, TRUE);
-    $path_aliases = JSON::decode($aliases);
+    $file = $this->getContentFolder() . '/' . parent::ALIASNAME . '/' . parent::ALIASNAME . '.json';
+    if (!file_destination($file, FILE_EXISTS_ERROR)) {
+      $aliases = file_get_contents($file, TRUE);
+      $path_aliases = JSON::decode($aliases);
 
-    foreach ($path_aliases as $url => $alias) {
-      if (!$path_alias_storage->aliasExists($alias['alias'], $alias['langcode'])) {
-        $path_alias_storage->save($alias['source'], $alias['alias'], $alias['langcode']);
-        $count++;
-      }
-      else {
-        $skipped++;
+      foreach ($path_aliases as $url => $alias) {
+        if (!$path_alias_storage->aliasExists($alias['alias'], $alias['langcode'])) {
+          $path_alias_storage->save($alias['source'], $alias['alias'], $alias['langcode']);
+          $count++;
+        }
+        else {
+          $skipped++;
+        }
       }
     }
 

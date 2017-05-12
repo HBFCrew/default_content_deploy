@@ -12,6 +12,10 @@ use Drupal\default_content\Event\ImportEvent;
  */
 class DefaultContentDeployBase {
 
+  const DELIMITER = ',';
+
+  const ALIASNAME = 'aliases';
+
   protected $database;
 
   protected $importer;

@@ -9,9 +9,6 @@ use Drupal\Component\Serialization\Json;
  */
 class Exporter extends DefaultContentDeployBase {
 
-  // Variables delimiter.
-  const DELIMITER = ',';
-
   /**
    * Export entites by entity type, id or bundle.
    *
@@ -90,8 +87,8 @@ class Exporter extends DefaultContentDeployBase {
   public function exportSite($addEntityType = '', $skipEntityType = '') {
     $count = [];
 
-    $addEntityType = explode(self::DELIMITER, $addEntityType);
-    $skipEntityType = explode(self::DELIMITER, $skipEntityType);
+    $addEntityType = explode(parent::DELIMITER, $addEntityType);
+    $skipEntityType = explode(parent::DELIMITER, $skipEntityType);
 
     $defualtEntityTypes = [
       'block_content',
@@ -135,7 +132,7 @@ class Exporter extends DefaultContentDeployBase {
     }
     $serializedAliases = JSON::encode($aliases);
 
-    $this->exporter->writeDefaultContent(['aliases' => ['aliases' => $serializedAliases]], $this->getContentFolder());
+    $this->exporter->writeDefaultContent([parent::ALIASNAME => [parent::ALIASNAME => $serializedAliases]], $this->getContentFolder());
 
     return count($aliases);
   }
@@ -162,7 +159,7 @@ class Exporter extends DefaultContentDeployBase {
     // Export by bundle.
     if (!empty($entityBundle)) {
       $query = \Drupal::entityQuery($entityType);
-      $bundles = explode(self::DELIMITER, $entityBundle);
+      $bundles = explode(parent::DELIMITER, $entityBundle);
       $bundleType = 'type';
       if ($entityType == 'taxonomy_term') {
         $bundleType = 'vid';
@@ -177,7 +174,7 @@ class Exporter extends DefaultContentDeployBase {
 
     // Export by entity id.
     if (!empty($entityId)) {
-      $entityIds = explode(self::DELIMITER, $entityIds);
+      $entityIds = explode(parent::DELIMITER, $entityIds);
       $exportedEntityIds += $entityIds;
     }
 
@@ -189,7 +186,7 @@ class Exporter extends DefaultContentDeployBase {
     }
 
     // Explode skip entities.
-    $skipEntities = explode(self::DELIMITER, $skipEntities);
+    $skipEntities = explode(parent::DELIMITER, $skipEntities);
 
     // Diff entityIds against skipEntities.
     $exportedEntityIds = array_diff($exportedEntityIds, $skipEntities);

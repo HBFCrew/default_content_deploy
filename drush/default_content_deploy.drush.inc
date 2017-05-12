@@ -203,8 +203,8 @@ function drush_default_content_deploy_export_aliases() {
  * @todo Comment code.
  */
 function drush_default_content_deploy_import_aliases() {
-  $manager = \Drupal::service('default_content_deploy.deploy');
-  $import_status = $manager->importAliases();
+  $importer = \Drupal::service('default_content_deploy.importer');
+  $import_status = $importer->importUrlAliases();
 
   drush_log(t('Imported @count aliases.', ['@count' => $import_status['imported']]), 'success');
   drush_log(t('Skipped @skipped aliases.', ['@skipped' => $import_status['skipped']]), 'success');
