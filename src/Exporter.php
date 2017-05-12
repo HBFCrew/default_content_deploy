@@ -198,7 +198,7 @@ class Exporter extends DefaultContentDeployBase {
 
   protected function validateEntityType($entityType) {
     $validEntityTypes = $this->entityTypeManager->getDefinitions();
-    if (in_array($entityType, $validEntityTypes)) {
+    if (array_key_exists($entityType, $validEntityTypes)) {
       return TRUE;
     }
 
