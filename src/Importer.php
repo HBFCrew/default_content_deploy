@@ -78,8 +78,6 @@ class Importer extends DefaultContentDeployBase {
           continue;
         }
         $files = $this->scanner->scan($folder . '/' . $entity_type_id);
-        print $folder;
-        print_r($files);
         // Default content uses drupal.org as domain.
         // @todo Make this use a uri like default-content:.
         $this->linkManager->setLinkDomain($this->linkDomain);
@@ -128,15 +126,84 @@ class Importer extends DefaultContentDeployBase {
           $entity_type_id = $file->entity_type_id;
           $class = $this->entityTypeManager->getDefinition($entity_type_id)->getClass();
           $contents = $this->parseFile($file);
-          /** @var \Drupal\Core\Entity\Entity $entity */
+          /** @var \Drupal\Core\Entity\EntityChangedTrait $entity */
           $entity = $this->serializer->deserialize($contents, $class, 'hal_json', ['request_method' => 'POST']);
-          $entity->enforceIsNew(TRUE);
+
+
+          // Test if entity already exists.
+          if ($old_entity = \Drupal::entityManager()->loadEntityByUuid($entity_type_id, $entity->uuid())) {
+            // Yes, entity exists.
+            // Get last update timestamps if available.
+            if (method_exists($old_entity, 'getChangedTime')) {
+              $old_entity_changed_time = $old_entity->getChangedTime();
+              $entity_changed_time = $entity->getChangedTime();
+            }
+            elseif (FALSE) {
+              // @todo Try another method for update test.
+            }
+            else {
+              // This entity doesn't support changed time property.
+              // We are not able to get changed time, so we will force entity update.
+              $old_entity_changed_time = 0;
+              $entity_changed_time = 1;
+              dpr('Entity update forced.');
+            }
+
+            print('Existing Utime = ' . date('Y-m-d H:i:s', $old_entity_changed_time));
+            print("\n");
+            print('Imported Utime = ' . date('Y-m-d H:i:s', $entity_changed_time));
+            print("\n");
+
+            // Check if destination entity is older than existing content.
+            if ($old_entity_changed_time < $entity_changed_time) {
+              // Update entity.
+
+              $entity->{$entity->getEntityType()
+                ->getKey('id')} = $old_entity->id();
+              $entity->setOriginalId($old_entity->id());
+              $entity->enforceIsNew(FALSE);
+              try {
+                $entity->setNewRevision(FALSE);
+              }
+              catch (\LogicException $e) {
+              }
+            }
+            else {
+              // Skip entity. No update.
+              //dpr('Skipped. Newer or the same content already exists.');
+              $result_info['skipped']++;
+              continue;
+            }
+          }
+          else {
+            // Entity is not exists - let's create new one.
+            $entity->enforceIsNew(TRUE);
+          }
+
           // Ensure that the entity is not owned by the anonymous user.
           if ($entity instanceof EntityOwnerInterface && empty($entity->getOwnerId())) {
             $entity->setOwner($root_user);
           }
+          // Store saving method for logger.
+          $saving_method = $entity->isNew() ? 'created' : 'updated';
+
           $entity->save();
           $created[$entity->uuid()] = $entity;
+          $result_info[$saving_method]++;
+
+          $saved_entity_log_info = [
+            '@type'   => $entity->getEntityTypeId(),
+            '@bundle' => $entity->bundle(),
+            '@id'     => $entity->id(),
+            '@method' => $saving_method,
+            '@file'   => $file->name,
+          ];
+          \Drupal::logger('default_content_deploy')
+            ->info(
+              'Entity (type: @type/@bundle, ID: @id) @method successfully from @file',
+              $saved_entity_log_info
+            );
+
         }
       }
       //$this->eventDispatcher->dispatch(DefaultContentEvents::IMPORT, new ImportEvent($created, $module));
@@ -147,7 +214,6 @@ class Importer extends DefaultContentDeployBase {
     // Reset link domain.
     $this->linkManager->setLinkDomain(FALSE);
 
-    // @todo Get results!
     return $result_info;
   }
 
