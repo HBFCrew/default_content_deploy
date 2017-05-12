@@ -25,6 +25,10 @@ class Exporter extends DefaultContentDeployBase {
    *   Number of exported entities.
    */
   public function export($entityType, $entityBundle = '', $entityIds = '', $skipEntities = '') {
+    if (!$this->validateEntityType($entityType)) {
+      throw new \InvalidArgumentException(sprintf('Entity type "%s" does not exist', $entityType));
+    }
+
     $exportedEntities = [];
     // Get entities for export.
     $exportedEntityIds = $this->getEntityIdsForExport($entityType, $entityBundle, $entityIds, $skipEntities);
@@ -57,6 +61,10 @@ class Exporter extends DefaultContentDeployBase {
    *   Number of exported entities.
    */
   public function exportWithReferences($entityType, $entityBundle = '', $entityIds = '', $skipEntities = '') {
+    if (!$this->validateEntityType($entityType)) {
+      throw new \InvalidArgumentException(sprintf('Entity type "%s" does not exist', $entityType));
+    }
+
     // Get entities for export.
     $exportedEntityIds = $this->getEntityIdsForExport($entityType, $entityBundle, $entityIds, $skipEntities);
     // Serialize entities and get uuids for entities.
@@ -148,7 +156,6 @@ class Exporter extends DefaultContentDeployBase {
    *   Return array of entitiy ids.
    */
   protected function getEntityIdsForExport($entityType, $entityBundle, $entityIds, $skipEntities) {
-    // @TODO: Check if entity type and bundle exists.
     $exportedEntityIds = [];
 
     // Export by bundle.
@@ -187,6 +194,15 @@ class Exporter extends DefaultContentDeployBase {
     $exportedEntityIds = array_diff($exportedEntityIds, $skipEntities);
 
     return $exportedEntityIds;
+  }
+
+  protected function validateEntityType($entityType) {
+    $validEntityTypes = $this->entityTypeManager->getDefinitions();
+    if (in_array($entityType, $validEntityTypes)) {
+      return TRUE;
+    }
+
+    return FALSE;
   }
 
 }
