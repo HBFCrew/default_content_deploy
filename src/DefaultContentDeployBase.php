@@ -63,22 +63,6 @@ class DefaultContentDeployBase {
   }
 
 
-  /** MARTIN */
-  public function sandbox() {
-    dpm('Debug start.');
-  }
-
-  /*protected function saveSingleFile($entity_type_id, $entity_id, $path) {
-    $serializer = $this->get_serializer();
-    $export = $this->exportContent($entity_type_id, $entity_id);
-    $decoded = $serializer->decode($export, 'hal_json');
-    $item_uuid = $decoded['uuid'][0]['value'];
-    file_prepare_directory($path, FILE_CREATE_DIRECTORY);
-    $file = $path . '/' . $item_uuid . '.json';
-    $save = file_put_contents($file, $export);
-    return $save;
-  }*/
-
   /**
    * Set System site, Admin and Anonymous UUIDs and Admin's name
    * and display current values.
@@ -93,6 +77,7 @@ class DefaultContentDeployBase {
   public function uuidSync($uuidSite, $uuidAnonymous, $uuidAdmin, $adminName) {
 
     // Site UUID.
+    // @TODO Config do __construct()
     $config = \Drupal::config('system.site');
     $current_site_uuid = $config->get('uuid');
     //Tady tomu vubec nerozumim :)
