@@ -57,18 +57,13 @@ class Exporter extends DefaultContentDeployBase {
    *   Number of exported entities.
    */
   public function exportWithReferences($entityType, $entityBundle = '', $entityIds = '', $skipEntities = '') {
-    $exportedEntities = [];
     // Get entities for export.
     $exportedEntityIds = $this->getEntityIdsForExport($entityType, $entityBundle, $entityIds, $skipEntities);
     // Serialize entities and get uuids for entities.
     foreach ($exportedEntityIds as $entityId) {
-      $exportedEntity = $this->exporter->exportContentWithReferences($entityType, $entityId);
-      $deseralizedEntity = $this->serializer->decode($exportedEntity, 'hal_json');
-      $uuid = $deseralizedEntity['uuid'][0]['value'];
-      $exportedEntities[$entityType][$uuid] = $exportedEntity;
+      $exportedEntityByType = $this->exporter->exportContentWithReferences($entityType, $entityId);
+      $this->exporter->writeDefaultContent($exportedEntityByType, $this->getContentFolder());
     }
-    // Export all entities to folder.
-    $this->exporter->writeDefaultContent($exportedEntities, $this->getContentFolder());
 
     return count($exportedEntityIds);
   }
