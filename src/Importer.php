@@ -22,14 +22,9 @@ class Importer extends DefaultContentDeployBase {
   }
 
   /**
-   * @param $module
-   *
    * @return array
-   * @throws \Exception
-   *
-   * @var   $entity EntityInterface
    */
-  public function import($module = 'default_content_deploy') {
+  public function import() {
     $created = [];
     $result_info = [
       'processed' => 0,
@@ -37,7 +32,7 @@ class Importer extends DefaultContentDeployBase {
       'updated'   => 0,
       'skipped'   => 0,
     ];
-    $folder = drupal_get_path('module', $module) . "/content";
+    $folder = $this->getContentFolder();
 
     if (file_exists($folder)) {
       $file_map = [];

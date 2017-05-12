@@ -28,6 +28,9 @@ class DefaultContentDeployBase {
 
   protected $serializer;
 
+  /**
+   * DefaultContentDeployBase constructor.
+   */
   public function __construct() {
     $this->database = \Drupal::database();
     $this->importer = \Drupal::service('default_content.importer');
@@ -37,12 +40,35 @@ class DefaultContentDeployBase {
     $this->serializer = \Drupal::service('serializer');
   }
 
+  /**
+   * Get content folder.
+   *
+   * Folder is automatically created on install inside files folder.
+   * Or you can overide content folder in settings.php file.
+   *
+   * @example $config_directories['content'] = '../content';
+   *
+   * @return string
+   *   Return path to the content folder.
+   */
+  protected function getContentFolder() {
+    global $config_directories;
+    if (isset($config_directories) && isset($config_directories['content'])) {
+      return $config_directories['content'];
+    }
+    else {
+      $hash_salt = $this->settings->getHashSalt();
+      return 'public://content_' . $hash_salt;
+    }
+  }
+
+
+  /** MARTIN */
   public function sandbox() {
     dpm('Debug start.');
   }
 
-  function saveSingleFile($entity_type_id, $entity_id, $path) {
-    /** @var \Drupal\default_content_deploy\DefaultContentDeploy $manager */
+  /*protected function saveSingleFile($entity_type_id, $entity_id, $path) {
     $serializer = $this->get_serializer();
     $export = $this->exportContent($entity_type_id, $entity_id);
     $decoded = $serializer->decode($export, 'hal_json');
@@ -51,23 +77,27 @@ class DefaultContentDeployBase {
     $file = $path . '/' . $item_uuid . '.json';
     $save = file_put_contents($file, $export);
     return $save;
-  }
+  }*/
 
-  public function get_serializer() {
-    return $this->serializer;
-  }
   /**
    * Set System site, Admin and Anonymous UUIDs and Admin's name
    * and display current values.
+   *
+   * @param $uuidSite
+   * @param $uuidAnonymous
+   * @param $uuidAdmin
+   * @param $adminName
+   *
+   * @return array
    */
-  public function uuidSync($uuid_site, $uuid_anonymous, $uuid_admin, $admin_name) {
+  public function uuidSync($uuidSite, $uuidAnonymous, $uuidAdmin, $adminName) {
 
     // Site UUID.
     $config = \Drupal::config('system.site');
     $current_site_uuid = $config->get('uuid');
     //Tady tomu vubec nerozumim :)
-    if (!empty($uuid_site)) {
-      if ($current_site_uuid == $uuid_site) {
+    if (!empty($uuidSite)) {
+      if ($current_site_uuid == $uuidSite) {
         /*drush_log(t('No change: system.site UUID is already @uuid',
           ['@uuid' => $uuid_site]), 'warning');*/
       }
@@ -83,16 +113,16 @@ class DefaultContentDeployBase {
     }
 
     // Anonymous UUID.
-    if (!empty($uuid_anonymous)) {
-      $current_uuid_anonymous = $this->updateUserUuid(0, $uuid_anonymous, 'Anonymous');
+    if (!empty($uuidAnonymous)) {
+      $current_uuid_anonymous = $this->updateUserUuid(0, $uuidAnonymous, 'Anonymous');
     }
     else {
       $current_uuid_anonymous = $this->getUuidByUid(0);
     }
 
     // Admin UUID.
-    if (!empty($uuid_admin)) {
-      $current_uuid_admin = $this->updateUserUuid(1, $uuid_admin, 'Admin');
+    if (!empty($uuidAdmin)) {
+      $current_uuid_admin = $this->updateUserUuid(1, $uuidAdmin, 'Admin');
     }
     else {
       $current_uuid_admin = $this->getUuidByUid(1);
@@ -100,15 +130,15 @@ class DefaultContentDeployBase {
 
     // Admin Name.
     $current_name = $this->getUid1Name();
-    if (!empty($admin_name)) {
-      if ($current_name == $admin_name) {
+    if (!empty($adminName)) {
+      if ($current_name == $adminName) {
         // No change.
         /*drush_log(t('No change: Admin\'s name is already @username.',
           ['@username' => $current_name]), 'warning');*/
       }
       else {
         // Update name.
-        $current_name = $this->updateAdminName($admin_name);
+        $current_name = $this->updateAdminName($adminName);
       }
     }
 
@@ -125,11 +155,11 @@ class DefaultContentDeployBase {
    *
    * @param int    $uid
    * @param string $uuid
-   * @param string $username
+   * @param string $userName
    *
    * @return string new UUID
    */
-  private function updateUserUuid($uid, $uuid, $username): string {
+  protected function updateUserUuid($uid, $uuid, $userName): string {
     $current_uuid = $this->getUuidByUid($uid);
     if ($current_uuid == $uuid) {
       return FALSE;
@@ -156,7 +186,7 @@ class DefaultContentDeployBase {
    *
    * @return string
    */
-  private function getUuidByUid($uid): string {
+  protected function getUuidByUid($uid): string {
     /** @var \Drupal\Core\Database\Driver\mysql\Select $query */
     $query = $this->database->select('users')
       ->fields('users', ['uuid'])
@@ -172,7 +202,7 @@ class DefaultContentDeployBase {
    * @param int    $uid
    * @param string $uuid
    */
-  private function updateUuidByUid($uid, $uuid) {
+  protected function updateUuidByUid($uid, $uuid) {
     $this->database->update('users')
       ->fields(
         [
@@ -188,7 +218,7 @@ class DefaultContentDeployBase {
    *
    * @return string Name
    */
-  private function getUid1Name() {
+  protected function getUid1Name() {
     /** @var \Drupal\Core\Database\Driver\mysql\Select $query */
     $query = $this->database->select('users_field_data')
       ->fields('users_field_data', ['name'])
@@ -200,15 +230,15 @@ class DefaultContentDeployBase {
   /**
    * Update Admin's name.
    *
-   * @param string $admin_name
+   * @param string $adminName
    *
    * @return string Current Admin name.
    */
-  protected function updateAdminName($admin_name) {
+  protected function updateAdminName($adminName) {
     $this->database->update('users_field_data')
       ->fields(
         [
-          'name' => $admin_name,
+          'name' => $adminName,
         ]
       )
       ->condition('uid', 1)
@@ -216,23 +246,6 @@ class DefaultContentDeployBase {
     $current_name = $this->getUid1Name();
     // Validation
     return $current_name;
-  }
-
-  protected function getContentFolder() {
-    global $config_directories;
-    if (isset($config_directories) && isset($config_directories['content'])) {
-      return $config_directories['content'];
-    }
-    else {
-      $hash_salt = $this->settings->getHashSalt();
-      return 'public://content_' . $hash_salt;
-    }
-  }
-
-  private function prepareContentFolder() {
-    $hash_salt = $this->settings->getHashSalt();
-    $path = 'public://content_' . $hash_salt;
-    file_prepare_directory($path, FILE_CREATE_DIRECTORY);
   }
 
 }

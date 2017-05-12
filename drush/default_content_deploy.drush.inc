@@ -6,8 +6,6 @@
  *
  * @todo Remove site UUID sync? This value must be set before install of this module.
  */
-use Drupal\Core\Database\Database;
-use Drupal\Component\Serialization\Json;
 
 /**
  * Implements hook_drush_command().
@@ -17,63 +15,85 @@ function default_content_deploy_drush_command() {
     'core' => array('8+'),
     'drupal dependencies' => array('default_content'),
   );
-  $items['default-content-deploy-import'] = [
-      'description' => dt('Import all the content defined in a module.'),
-      'options' => [
-        'module' => dt('The name of the module.'),
-      ],
-      'aliases' => ['dcdi'],
-    ] + $base;
 
   $items['default-content-deploy-export'] = [
-      'description' => dt('Exports a single entity or group of entities to default content deploy module'),
-      'arguments' => [
-        'entity_type' => dt('The entity type to export.'),
-      ],
-      'options' => [
-        'entity_id' => dt('The ID of the entity to export.'),
-        'bundle' => dt('Write out the exported bundle of entity'),
-        'skip_entities' => dt('The ID of the entity to skip.'),
-      ],
-      'aliases' => ['dcde'],
-      'required-arguments' => 1,
-    ] + $base;
+    'aliases' => ['dcde'],
+    'description' => dt('Exports a single entity or group of entities to default content deploy module'),
+    'arguments' => [
+      'entity_type' => dt('The entity type to export.'),
+    ],
+    'options' => [
+      'entity_id' => dt('The ID of the entity to export.'),
+      'bundle' => dt('Write out the exported bundle of entity'),
+      'skip_entities' => dt('The ID of the entity to skip.'),
+    ],
+    'required-arguments' => 1,
+    'examples' => [
+      'drush dcde' => '',
+    ],
+  ] + $base;
 
   $items['default-content-deploy-export-with-references'] = [
-      'description' => dt('Exports a single entity with referencesto default content deploy module'),
-      'arguments' => [
-        'entity_type' => dt('The entity type to export.'),
-      ],
-      'options' => [
-        'entity_id' => dt('The ID of the entity to export.'),
-        'bundle' => dt('Write out the exported bundle of entity'),
-        'skip_entities' => dt('The ID of the entity to skip.'),
-        'skip_core_users' => dt('Do not export user entities created by core'),
-      ],
-      'aliases' => ['dcder'],
-      'required-arguments' => 1,
-    ] + $base;
+    'aliases' => ['dcder'],
+    'description' => dt('Exports a single entity with referencesto default content deploy module'),
+    'arguments' => [
+      'entity_type' => dt('The entity type to export.'),
+    ],
+    'options' => [
+      'entity_id' => dt('The ID of the entity to export.'),
+      'bundle' => dt('Write out the exported bundle of entity'),
+      'skip_entities' => dt('The ID of the entity to skip.'),
+      'skip_core_users' => dt('Do not export user entities created by core'),
+    ],
+    'required-arguments' => 1,
+    'examples' => [
+      'drush dcder' => '',
+    ],
+  ] + $base;
 
   $items['default-content-deploy-export-site'] = [
-      'description' => dt('Exports a site to default content deploy module'),
-      'options' => [
-        'add_entity_type' => dt('The entity types to add.'),
-        'skip_entity_type' => dt('The entity types to skip.'),
-      ],
-      'aliases' => ['dcdes'],
-    ] + $base;
+    'aliases' => ['dcdes'],
+    'description' => dt('Exports a site to default content deploy module'),
+    'options' => [
+      'add_entity_type' => dt('The entity types to add.'),
+      'skip_entity_type' => dt('The entity types to skip.'),
+    ],
+    'examples' => [
+      'drush dcdes' => '',
+      'drush dcdes --add_entity_type=collection,my_custom_entity' => '',
+      'drush dcdes --skip_entity_type=node,user' => '',
+    ],
+  ] + $base;
 
   $items['default-content-deploy-export-aliases'] = [
-    'description' => dt('Exports site url aliases.'),
     'aliases' => ['dcdea'],
-  ];
+    'description' => dt('Exports site url aliases.'),
+    'examples' => [
+      'drush dcdea' => '',
+    ],
+  ] + $base;
+
+  $items['default-content-deploy-import'] = [
+    'aliases' => ['dcdi'],
+    'description' => dt('Import all the content defined in a module.'),
+    'options' => [
+      'module' => dt('The name of the module.'),
+    ],
+    'examples' => [
+      'drush dcdi' => '',
+    ],
+  ] + $base;
 
   $items['default-content-deploy-import-aliases'] = [
-    'description' => dt('Import site url aliases.'),
     'aliases' => ['dcdia'],
-    ] + $base;
+    'description' => dt('Import site url aliases.'),
+    'examples' => [
+      'drush dcdia' => '',
+    ],
+  ] + $base;
 
   $items['default-content-deploy-uuid-sync'] = [
+    'aliases' => ['dcd-sync'],
     'description' => dt('Set System Site, Admin and Anonymous UUIDs, Admin name.'),
     'options' => [
       'site' => dt('The system.site UUID.'),
@@ -81,37 +101,16 @@ function default_content_deploy_drush_command() {
       'uuid1' => dt('The UUID for Admin.'),
       'name' => dt('The login name for Admin.'),
     ],
-    'examples' => array(
+    'examples' => [
       'drush dcd-sync' => 'Displays the current UUID values.',
       'drush dcd-sync --site=value' => 'Set system.site UUID to value.',
       'drush dcd-sync --uuid0=value1 --uuid1=value2' => 'Set UUID for Anonymous user and Admin user.',
       'drush dcd-sync --name=admin' => 'Set name for Admin user.',
-    ),
-    'aliases' => ['dcd-sync'],
-    ] + $base;
+    ],
+  ] + $base;
 
   return $items;
 }
-
-/**
- * Import all of the content from a given module.
- * Optional module name to import.
- */
-function drush_default_content_deploy_import() {
-  /** @var \Drupal\default_content_deploy\DefaultContentDeploy $manager */
-  $manager = \Drupal::service('default_content_deploy.deploy');
-  $module_name = drush_get_option('module') ? drush_get_option('module') : 'default_content_deploy';
-  $result_info = $manager->deployContent($module_name);
-
-  // Display results.
-  drush_log(t('Deployed @count entities.', ['@count' => $result_info['processed']]), 'success');
-  drush_print(t('- created: @count', ['@count' => $result_info['created']]));
-  drush_print(t('- updated: @count', ['@count' => $result_info['updated']]));
-  drush_print(t('- skipped: @count', ['@count' => $result_info['skipped']]));
-
-  $manager->importAliases();
-}
-
 
 /**
  * Exports entities by entity type, bundle and entity id.
@@ -132,6 +131,7 @@ function drush_default_content_deploy_export($entity_type_id) {
   $entity_bundles = drush_get_option('bundle', '');
   $skip_entities = drush_get_option('skip_entities', '');
 
+  /** @var \Drupal\default_content_deploy\Exporter $exporter */
   $exporter = \Drupal::service('default_content_deploy.exporter');
   $count = $exporter->export($entity_type_id, $entity_bundles, $entity_ids, $skip_entities);
 
@@ -157,6 +157,7 @@ function drush_default_content_deploy_export_with_references($entity_type_id) {
   $entity_bundles = drush_get_option('bundle', '');
   $skip_entities = drush_get_option('skip_entities', '');
 
+  /** @var \Drupal\default_content_deploy\Exporter $exporter */
   $exporter = \Drupal::service('default_content_deploy.exporter');
   $count = $exporter->exportWithReferences($entity_type_id, $entity_bundles, $entity_ids, $skip_entities);
   drush_log(t('Exported @count entities with references.', ['@count' => $count]), 'success');
@@ -175,6 +176,7 @@ function drush_default_content_deploy_export_site() {
   $add_entity_type = drush_get_option('add_entity_type', '');
   $skip_entity_type = drush_get_option('skip_entity_type', '');
 
+  /** @var \Drupal\default_content_deploy\Exporter $exporter */
   $exporter = \Drupal::service('default_content_deploy.exporter');
   $count = $exporter->exportSite($add_entity_type, $skip_entity_type);
 
@@ -189,6 +191,7 @@ function drush_default_content_deploy_export_site() {
  * @example drush dcdea
  */
 function drush_default_content_deploy_export_aliases() {
+  /** @var \Drupal\default_content_deploy\Exporter $exporter */
   $exporter = \Drupal::service('default_content_deploy.exporter');
   $aliases = $exporter->exportUrlAliases();
 
@@ -196,13 +199,32 @@ function drush_default_content_deploy_export_aliases() {
 }
 
 /**
- * Import path aliases.
- * Data file is expected in default_content_deploy/alias/url_aliases.json.
+ * Import all of the content from content folder.
  *
- * @todo The drush dcdi can import also from other modules, so path can not be hardcoded.
- * @todo Comment code.
+ * @example drush dcdi
+ */
+function drush_default_content_deploy_import() {
+  /** @var \Drupal\default_content_deploy\Importer $importer */
+  $importer = \Drupal::service('default_content_deploy.importer');
+  $result_info = $importer->import();
+  $importer->importUrlAliases();
+
+  // Display results.
+  drush_log(t('Deployed @count entities.', ['@count' => $result_info['processed']]), 'success');
+  drush_print(t('- created: @count', ['@count' => $result_info['created']]));
+  drush_print(t('- updated: @count', ['@count' => $result_info['updated']]));
+  drush_print(t('- skipped: @count', ['@count' => $result_info['skipped']]));
+
+
+}
+
+/**
+ * Import path aliases.
+ *
+ * @example drush dcdia
  */
 function drush_default_content_deploy_import_aliases() {
+  /** @var \Drupal\default_content_deploy\Importer $importer */
   $importer = \Drupal::service('default_content_deploy.importer');
   $import_status = $importer->importUrlAliases();
 
@@ -210,10 +232,14 @@ function drush_default_content_deploy_import_aliases() {
   drush_log(t('Skipped @skipped aliases.', ['@skipped' => $import_status['skipped']]), 'success');
 }
 
-
 /**
  * Set System site, Admin and Anonymous UUIDs and Admin's name
  * and display current values.
+ *
+ * @example drush dcd-sync
+ * @example drush dcd-sync --site=value
+ * @example drush dcd-sync --uuid0=value1 --uuid1=value2
+ * @example drush dcd-sync --name=admin
  */
 function drush_default_content_deploy_uuid_sync() {
   $uuid_site = drush_get_option('site');
@@ -221,8 +247,8 @@ function drush_default_content_deploy_uuid_sync() {
   $uuid_admin = drush_get_option('uuid1');
   $admin_name = drush_get_option('name');
 
-  $manager = \Drupal::service('default_content_deploy.deploy');
-  $import_status = $manager->uuidSync($uuid_site, $uuid_anonymous, $uuid_admin, $admin_name);
+  $dcd = \Drupal::service('default_content_deploy.base');
+  $import_status = $dcd->uuidSync($uuid_site, $uuid_anonymous, $uuid_admin, $admin_name);
 
   // Display current values.
   drush_print();
