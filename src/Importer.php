@@ -138,14 +138,14 @@ class Importer extends DefaultContentDeployBase {
           // Here is start of injected code for Entity update.
           // Test if entity (defined by UUID) already exists.
           // @todo Replace deprecated entityManager().
-          if ($old_entity = \Drupal::entityManager()
+          if ($current_entity = \Drupal::entityManager()
             ->loadEntityByUuid($entity_type_id, $entity->uuid())
           ) {
             // Yes, entity exists.
             // Get the last update timestamps if available.
-            if (method_exists($old_entity, 'getChangedTime')) {
+            if (method_exists($current_entity, 'getChangedTime')) {
               /** @var \Drupal\Core\Entity\EntityChangedTrait $entity */
-              $old_entity_changed_time = $old_entity->getChangedTime();
+              $current_entity_changed_time = $current_entity->getChangedTime();
               $entity_changed_time = $entity->getChangedTime();
             }
             elseif (FALSE) {
@@ -153,19 +153,19 @@ class Importer extends DefaultContentDeployBase {
             }
             else {
               // We are not able to get updated time of entity, so we will force entity update.
-              $old_entity_changed_time = 0;
+              $current_entity_changed_time = 0;
               $entity_changed_time = 1;
             }
 
-            $this->printEntityTimeInfo($entity, $old_entity_changed_time, $entity_changed_time);
+            $this->printEntityTimeInfo($entity, $current_entity_changed_time, $entity_changed_time);
 
             // Check if destination entity is older than existing content.
-            if ($old_entity_changed_time < $entity_changed_time) {
+            if ($current_entity_changed_time < $entity_changed_time) {
               // Update existing older entity with newer one.
               /** @var \Drupal\Core\Entity\Entity $entity */
               $entity->{$entity->getEntityType()
-                ->getKey('id')} = $old_entity->id();
-              $entity->setOriginalId($old_entity->id());
+                ->getKey('id')} = $current_entity->id();
+              $entity->setOriginalId($current_entity->id());
               $entity->enforceIsNew(FALSE);
               try {
                 $entity->setNewRevision(FALSE);
@@ -274,10 +274,10 @@ class Importer extends DefaultContentDeployBase {
 
   /**
    * @param \Drupal\Core\Entity\Entity $entity
-   * @param $old_entity_changed_time
+   * @param $current_entity_changed_time
    * @param $entity_changed_time
    */
-  protected function printEntityTimeInfo(Entity $entity, $old_entity_changed_time, $entity_changed_time) {
+  protected function printEntityTimeInfo(Entity $entity, $current_entity_changed_time, $entity_changed_time) {
     print("\n");
     print("\n");
     print('Label: ' . $entity->label());
@@ -286,7 +286,7 @@ class Importer extends DefaultContentDeployBase {
         ->getLabel() . '/' . $entity->bundle());
     print("\n");
 
-    print('Existing Utime = ' . date('Y-m-d H:i:s', $old_entity_changed_time));
+    print('Existing Utime = ' . date('Y-m-d H:i:s', $current_entity_changed_time));
     print("\n");
     print('Imported Utime = ' . date('Y-m-d H:i:s', $entity_changed_time));
     print("\n");
