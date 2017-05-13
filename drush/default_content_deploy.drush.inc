@@ -256,6 +256,6 @@ function drush_default_content_deploy_uuid_sync() {
   drush_print('----------------');
   drush_print(t('System.site UUID = @uuid', ['@uuid' => $import_status['current_site_uuid']]));
   drush_print(t('Anonymous user UUID = @uuid', ['@uuid' => $import_status['current_uuid_anonymous']]));
-  drush_print(t('Admin UUID = @uuid', ['@uuid' => $$import_status['current_uuid_admin']]));
+  drush_print(t('Admin UUID = @uuid', ['@uuid' => $import_status['current_uuid_admin']]));
   drush_print(t('Admin\'s name = @name', ['@name' => $import_status['current_name']]));
 }
