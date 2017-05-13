@@ -141,7 +141,7 @@ class Importer extends DefaultContentDeployBase {
           if ($current_entity = \Drupal::entityManager()
             ->loadEntityByUuid($entity_type_id, $entity->uuid())
           ) {
-            // Yes, entity exists.
+            // Yes, entity already exists.
             // Get the last update timestamps if available.
             if (method_exists($current_entity, 'getChangedTime')) {
               /** @var \Drupal\Core\Entity\EntityChangedTrait $entity */
@@ -180,9 +180,21 @@ class Importer extends DefaultContentDeployBase {
               continue;
             }
           }
+          // Non-existing UUID. Test if exists Current entity by ID (not UUID).
+          // If YES, then we can update it or skip.
+          // @todo Replace deprecated entity_load().
+          elseif ($current_entity_object = entity_load($entity_type_id, $entity->id())) {
+            print ('--------- exists --------- force update ------');
+            $entity->enforceIsNew(FALSE);
+            // Or we can protect existing entities (by ID). Drush option?
+            // @todo In that case, we use continue;
+            // continue;
+          }
           else {
             // Imported entity is not exists - let's create new one.
             $entity->enforceIsNew(TRUE);
+
+
           }
 
           // Ensure that the entity is not owned by the anonymous user.
