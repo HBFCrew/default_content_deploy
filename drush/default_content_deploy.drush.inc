@@ -92,20 +92,11 @@ function default_content_deploy_drush_command() {
     ],
   ] + $base;
 
-  $items['default-content-deploy-uuid-sync'] = [
-    'aliases' => ['dcd-sync'],
-    'description' => dt('Set System Site, Admin and Anonymous UUIDs, Admin name.'),
-    'options' => [
-      'site' => dt('The system.site UUID.'),
-      'uuid0' => dt('The UUID for Anonymous user.'),
-      'uuid1' => dt('The UUID for Admin.'),
-      'name' => dt('The login name for Admin.'),
-    ],
+  $items['default-content-deploy-uuid-info'] = [
+    'aliases' => ['dcd-uuid-info'],
+    'description' => dt('Get current System Site, Admin and Anonymous UUIDs, Admin name.'),
     'examples' => [
-      'drush dcd-sync' => 'Displays the current UUID values.',
-      'drush dcd-sync --site=value' => 'Set system.site UUID to value.',
-      'drush dcd-sync --uuid0=value1 --uuid1=value2' => 'Set UUID for Anonymous user and Admin user.',
-      'drush dcd-sync --name=admin' => 'Set name for Admin user.',
+      'drush dcd-uuid-info' => 'Displays the current UUID values.',
     ],
   ] + $base;
 
@@ -181,7 +172,7 @@ function drush_default_content_deploy_export_site() {
   $count = $exporter->exportSite($add_entity_type, $skip_entity_type);
 
   foreach ($count as $entity => $value) {
-    drush_log(t('Exported @count entities @entity.', ['@count' => $value, '@entity' => $entity]), 'success');
+    drush_log(t('Exported @count entities of type @entity.', ['@count' => $value, '@entity' => $entity]), 'success');
   }
 }
 
@@ -206,7 +197,7 @@ function drush_default_content_deploy_export_aliases() {
 function drush_default_content_deploy_import() {
   /** @var \Drupal\default_content_deploy\Importer $importer */
   $importer = \Drupal::service('default_content_deploy.importer');
-  $result_info = $importer->importContent();
+  $result_info = $importer->deployContent();
   $importer->importUrlAliases();
 
   // Display results.
@@ -233,29 +224,16 @@ function drush_default_content_deploy_import_aliases() {
 }
 
 /**
- * Set System site, Admin and Anonymous UUIDs and Admin's name
+ * Get System site, Admin and Anonymous UUIDs and Admin's name
  * and display current values.
- *
- * @example drush dcd-sync
- * @example drush dcd-sync --site=value
- * @example drush dcd-sync --uuid0=value1 --uuid1=value2
- * @example drush dcd-sync --name=admin
  */
-function drush_default_content_deploy_uuid_sync() {
-  $uuid_site = drush_get_option('site');
-  $uuid_anonymous = drush_get_option('uuid0');
-  $uuid_admin = drush_get_option('uuid1');
-  $admin_name = drush_get_option('name');
-
+function drush_default_content_deploy_uuid_info() {
   $dcd = \Drupal::service('default_content_deploy.base');
-  $import_status = $dcd->uuidSync($uuid_site, $uuid_anonymous, $uuid_admin, $admin_name);
+  $import_status = $dcd->uuidInfo();
 
   // Display current values.
-  drush_print();
-  drush_print(t('Current values') . ':');
-  drush_print('----------------');
   drush_print(t('System.site UUID = @uuid', ['@uuid' => $import_status['current_site_uuid']]));
   drush_print(t('Anonymous user UUID = @uuid', ['@uuid' => $import_status['current_uuid_anonymous']]));
-  drush_print(t('Admin UUID = @uuid', ['@uuid' => $$import_status['current_uuid_admin']]));
-  drush_print(t('Admin\'s name = @name', ['@name' => $import_status['current_name']]));
+  drush_print(t('Admin UUID = @uuid', ['@uuid' => $import_status['current_uuid_admin']]));
+  drush_print(t('Admin\'s name = @name', ['@name' => $import_status['current_admin_name']]));
 }

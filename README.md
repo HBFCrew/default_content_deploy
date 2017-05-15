@@ -112,23 +112,14 @@ Import path aliases from alias/url_aliases.json.
 Import all the content defined in a module.
 
 
-**drush dcd-sync**
+**drush dcd-uuid-info**
 
-Set System Site, Admin and Anonymous UUIDs, Admin name.
-Display current values (use without parameters).
-
-Options:
-
-     --name    The login name for Admin.
-     --site    The system.site UUID.
-     --uuid0   The UUID for Anonymous user.
-     --uuid1   The UUID for Admin.
+Get System Site, Admin and Anonymous UUIDs, Admin name.
+Display current values.
 
 Examples:
 
-    drush dcd-sync --name=admin --uuid0=21a8153ebb --uuid1=436ed2a --site=66baabd6
-    drush dcd-sync --name=marty
-    drush dcd-sync --uuid1=436ed2a
+    drush dcd-uuid-info
 
 
 Workflow - how to export and deploy content
@@ -138,7 +129,7 @@ Workflow - how to export and deploy content
 
 
 Protecting content data files
----------------------------
+-----------------------------
 There could be security problem, if anonymous user knows UUID of desired content
 and knows it is stored in specific module, then user could determine the URL 
 to desired content without permission.
@@ -155,14 +146,18 @@ Example for Nginx host config:
       return 403;
     }
 
-@todo Example of .htaccess
+@todo Example for .htaccess
 
 Maintainers
 -----------
-- Martin Klíma, (https://www.drupal.org/u/martin_klima), martin.klima@hqis.cz
-- Jakub Hnilička,
+- Martin Klíma, https://www.drupal.org/u/martin_klima, martin.klima@hqis.cz
+- Jakub Hnilička, https://www.drupal.org/u/hnilickajakub
 - Radoslav Terezka,
 
+Sponsor
+-------
 This project has been sponsored by:
 HBF s.r.o., http://hbf.sk/
-@todo Company description
+
+We provide flexible easy-to-use web solutions for your company.
+Our mission is to help you run your business in online world with attractive and perfectly working website.

@@ -2,11 +2,16 @@
 
 namespace Drupal\default_content_deploy;
 
-use Drupal\Component\Graph\Graph;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\Entity;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Session\AccountSwitcherInterface;
+use Drupal\default_content\ScannerInterface;
+use Drupal\hal\LinkManager\LinkManagerInterface;
 use Drupal\user\EntityOwnerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Serializer\Serializer;
 
 
 /**
@@ -15,48 +20,45 @@ use Drupal\user\EntityOwnerInterface;
  * The importContent() method is almost duplicate of
  *   \Drupal\default_content\Importer::importContent with injected code for
  *   content update. We are waiting for better DC code structure in a future.
- *
- * @todo Try to extend DC Importer class when possible.
  */
-class Importer extends DefaultContentDeployBase {
+class Importer extends \Drupal\default_content\Importer {
 
   /**
-   * @var \Drupal\Core\Path\AliasStorage
+   * @var \Drupal\default_content_deploy\DefaultContentDeployBase
    */
-  protected $pathAliasStorage;
-  protected $accountSwitcher;
-  protected $linkManager;
-  protected $scanner;
-  protected $linkDomain;
+  private $dcdBase;
+
 
   /**
-   * A list of vertex objects keyed by their link.
+   * Constructs the default content deploy manager.
    *
-   * Cloned!!!
-   *
-   * @var array
+   * @param \Symfony\Component\Serializer\Serializer $serializer
+   *   The serializer service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager service.
+   * @param \Drupal\hal\LinkManager\LinkManagerInterface $link_manager
+   *   The link manager service.
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   *   The event dispatcher.
+   * @param \Drupal\default_content\ScannerInterface $scanner
+   *   The file scanner.
+   * @param string $link_domain
+   *   Defines relation domain URI for entity links.
+   * @param \Drupal\Core\Session\AccountSwitcherInterface $account_switcher
+   *   The account switcher.
    */
-  protected $vertexes = [];
-
-  /**
-   * The graph entries.
-   *
-   * Cloned!!!
-   *
-   * @var array
-   */
-  protected $graph = [];
-
-  public function __construct() {
-    parent::__construct();
-    $this->pathAliasStorage = \Drupal::service('path.alias_storage');
-    $this->accountSwitcher = \Drupal::service('account_switcher');
-    $this->linkManager = \Drupal::service('hal.link_manager');
-    $this->scanner = \Drupal::service('default_content.scanner');
-    $this->linkDomain = 'http://drupal.org';
+  public function __construct(Serializer $serializer, EntityTypeManagerInterface $entity_type_manager, LinkManagerInterface $link_manager, EventDispatcherInterface $event_dispatcher, ScannerInterface $scanner, $link_domain, AccountSwitcherInterface $account_switcher, DefaultContentDeployBase $dcdBase) {
+    parent::__construct($serializer, $entity_type_manager, $link_manager, $event_dispatcher, $scanner, $link_domain, $account_switcher);
+    $this->dcdBase = $dcdBase;
   }
 
-  public function importContent() {
+  /**
+   * Import data from JSON and create new entities, or update existing.
+   *
+   * @return array
+   * @throws \Exception
+   */
+  public function deployContent() {
     $created = [];
     $result_info = [
       'processed' => 0,
@@ -64,7 +66,7 @@ class Importer extends DefaultContentDeployBase {
       'updated' => 0,
       'skipped' => 0,
     ];
-    $folder = $this->getContentFolder();
+    $folder = $this->dcdBase->getContentFolder();
 
     if (file_exists($folder)) {
       $root_user = $this->entityTypeManager->getStorage('user')->load(1);
@@ -138,14 +140,14 @@ class Importer extends DefaultContentDeployBase {
           // Here is start of injected code for Entity update.
           // Test if entity (defined by UUID) already exists.
           // @todo Replace deprecated entityManager().
-          if ($old_entity = \Drupal::entityManager()
+          if ($current_entity = \Drupal::entityManager()
             ->loadEntityByUuid($entity_type_id, $entity->uuid())
           ) {
-            // Yes, entity exists.
+            // Yes, entity already exists.
             // Get the last update timestamps if available.
-            if (method_exists($old_entity, 'getChangedTime')) {
+            if (method_exists($current_entity, 'getChangedTime')) {
               /** @var \Drupal\Core\Entity\EntityChangedTrait $entity */
-              $old_entity_changed_time = $old_entity->getChangedTime();
+              $current_entity_changed_time = $current_entity->getChangedTime();
               $entity_changed_time = $entity->getChangedTime();
             }
             elseif (FALSE) {
@@ -153,19 +155,19 @@ class Importer extends DefaultContentDeployBase {
             }
             else {
               // We are not able to get updated time of entity, so we will force entity update.
-              $old_entity_changed_time = 0;
+              $current_entity_changed_time = 0;
               $entity_changed_time = 1;
             }
 
-            $this->printEntityTimeInfo($entity, $old_entity_changed_time, $entity_changed_time);
+            $this->printEntityTimeInfo($entity, $current_entity_changed_time, $entity_changed_time);
 
             // Check if destination entity is older than existing content.
-            if ($old_entity_changed_time < $entity_changed_time) {
+            if ($current_entity_changed_time < $entity_changed_time) {
               // Update existing older entity with newer one.
               /** @var \Drupal\Core\Entity\Entity $entity */
               $entity->{$entity->getEntityType()
-                ->getKey('id')} = $old_entity->id();
-              $entity->setOriginalId($old_entity->id());
+                ->getKey('id')} = $current_entity->id();
+              $entity->setOriginalId($current_entity->id());
               $entity->enforceIsNew(FALSE);
               try {
                 $entity->setNewRevision(FALSE);
@@ -179,6 +181,16 @@ class Importer extends DefaultContentDeployBase {
               $result_info['skipped']++;
               continue;
             }
+          }
+          // Non-existing UUID. Test if exists Current entity by ID (not UUID).
+          // If YES, then we can update it or skip.
+          // @todo Replace deprecated entity_load().
+          elseif ($current_entity_object = entity_load($entity_type_id, $entity->id())) {
+            print ('--------- exists --------- force update ------');
+            $entity->enforceIsNew(FALSE);
+            // Or we can protect existing entities (by ID). Drush option?
+            // @todo In that case, we use continue;
+            // continue;
           }
           else {
             // Imported entity is not exists - let's create new one.
@@ -250,10 +262,13 @@ class Importer extends DefaultContentDeployBase {
    *   Return number of imported or skipped aliases.
    */
   public function importUrlAliases() {
-    $path_alias_storage = $this->pathAliasStorage;
+    $pathAliasStorage = \Drupal::service('path.alias_storage');
+    $path_alias_storage = $pathAliasStorage;
     $count = 0;
     $skipped = 0;
-    $file = $this->getContentFolder() . '/' . parent::ALIASNAME . '/' . parent::ALIASNAME . '.json';
+    $file = $this->dcdBase->getContentFolder() . '/'
+      . DefaultContentDeployBase::ALIAS_NAME . '/'
+      . DefaultContentDeployBase::ALIAS_NAME . '.json';
     if (!file_destination($file, FILE_EXISTS_ERROR)) {
       $aliases = file_get_contents($file, TRUE);
       $path_aliases = JSON::decode($aliases);
@@ -274,10 +289,10 @@ class Importer extends DefaultContentDeployBase {
 
   /**
    * @param \Drupal\Core\Entity\Entity $entity
-   * @param $old_entity_changed_time
+   * @param $current_entity_changed_time
    * @param $entity_changed_time
    */
-  protected function printEntityTimeInfo(Entity $entity, $old_entity_changed_time, $entity_changed_time) {
+  protected function printEntityTimeInfo(Entity $entity, $current_entity_changed_time, $entity_changed_time) {
     print("\n");
     print("\n");
     print('Label: ' . $entity->label());
@@ -286,70 +301,10 @@ class Importer extends DefaultContentDeployBase {
         ->getLabel() . '/' . $entity->bundle());
     print("\n");
 
-    print('Existing Utime = ' . date('Y-m-d H:i:s', $old_entity_changed_time));
+    print('Existing Utime = ' . date('Y-m-d H:i:s', $current_entity_changed_time));
     print("\n");
     print('Imported Utime = ' . date('Y-m-d H:i:s', $entity_changed_time));
     print("\n");
-  }
-
-
-
-  // Imported methods (cloned from \Drupal\default_content\Importer)
-  // @todo Find some better solution and avoid code duplication.
-
-  /**
-   * Parses content files.
-   *
-   * @param object $file
-   *   The scanned file.
-   *
-   * @return string
-   *   Contents of the file.
-   */
-  protected function parseFile($file) {
-    return file_get_contents($file->uri);
-  }
-
-  /**
-   * Resets tree properties.
-   */
-  protected function resetTree() {
-    $this->graph = [];
-    $this->vertexes = [];
-  }
-
-  /**
-   * Sorts dependencies tree.
-   *
-   * @param array $graph
-   *   Array of dependencies.
-   *
-   * @return array
-   *   Array of sorted dependencies.
-   */
-  protected function sortTree(array $graph) {
-    $graph_object = new Graph($graph);
-    $sorted = $graph_object->searchAndSort();
-    uasort($sorted, 'Drupal\Component\Utility\SortArray::sortByWeightElement');
-    return array_reverse($sorted);
-  }
-
-  /**
-   * Returns a vertex object for a given item link.
-   *
-   * Ensures that the same object is returned for the same item link.
-   *
-   * @param string $item_link
-   *   The item link as a string.
-   *
-   * @return object
-   *   The vertex object.
-   */
-  protected function getVertex($item_link) {
-    if (!isset($this->vertexes[$item_link])) {
-      $this->vertexes[$item_link] = (object) ['id' => $item_link];
-    }
-    return $this->vertexes[$item_link];
   }
 
 }
