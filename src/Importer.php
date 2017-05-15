@@ -2,7 +2,6 @@
 
 namespace Drupal\default_content_deploy;
 
-use Drupal\Component\Graph\Graph;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\Entity;
@@ -49,7 +48,7 @@ class Importer extends \Drupal\default_content\Importer {
    *   The account switcher.
    */
   public function __construct(Serializer $serializer, EntityTypeManagerInterface $entity_type_manager, LinkManagerInterface $link_manager, EventDispatcherInterface $event_dispatcher, ScannerInterface $scanner, $link_domain, AccountSwitcherInterface $account_switcher, DefaultContentDeployBase $dcdBase) {
-    parent::__construct($serializer, $entity_type_manager, $link_manager, $event_dispatcher,  $scanner, $link_domain, $account_switcher);
+    parent::__construct($serializer, $entity_type_manager, $link_manager, $event_dispatcher, $scanner, $link_domain, $account_switcher);
     $this->dcdBase = $dcdBase;
   }
 
@@ -267,7 +266,9 @@ class Importer extends \Drupal\default_content\Importer {
     $path_alias_storage = $pathAliasStorage;
     $count = 0;
     $skipped = 0;
-    $file = $this->dcdBase->getContentFolder() . '/' . $this->dcdBase->ALIAS_NAME . '/' . $this->dcdBase->ALIAS_NAME . '.json';
+    $file = $this->dcdBase->getContentFolder() . '/'
+      . DefaultContentDeployBase::ALIAS_NAME . '/'
+      . DefaultContentDeployBase::ALIAS_NAME . '.json';
     if (!file_destination($file, FILE_EXISTS_ERROR)) {
       $aliases = file_get_contents($file, TRUE);
       $path_aliases = JSON::decode($aliases);
