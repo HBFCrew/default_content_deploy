@@ -135,7 +135,7 @@ class Exporter extends DefaultContentDeployBase {
     }
     $serializedAliases = JSON::encode($aliases);
 
-    $this->exporter->writeDefaultContent([parent::ALIASNAME => [parent::ALIASNAME => $serializedAliases]], $this->getContentFolder());
+    $this->exporter->writeDefaultContent([parent::ALIAS_NAME => [parent::ALIAS_NAME => $serializedAliases]], $this->getContentFolder());
 
     return count($aliases);
   }
