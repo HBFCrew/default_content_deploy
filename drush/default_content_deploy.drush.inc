@@ -77,10 +77,11 @@ function default_content_deploy_drush_command() {
     'aliases' => ['dcdi'],
     'description' => dt('Import all the content defined in a module.'),
     'options' => [
-      'module' => dt('The name of the module.'),
+      'force-update' => dt('Content with different UUID but same ID will be updated (UUID will be replaced).'),
     ],
     'examples' => [
-      'drush dcdi' => '',
+      'drush dcdi' => 'Import content. Existing older content with matching UUID will be updated. Newer content and existing content with different UUID will be ignored.',
+      'drush dcdi --force-update' => 'Import content but existing content with different UUID will be updated (recommended for better content synchronization).',
     ],
   ] + $base;
 
@@ -195,9 +196,10 @@ function drush_default_content_deploy_export_aliases() {
  * @example drush dcdi
  */
 function drush_default_content_deploy_import() {
+  $force_update = drush_get_option('force-update', '');
   /** @var \Drupal\default_content_deploy\Importer $importer */
   $importer = \Drupal::service('default_content_deploy.importer');
-  $result_info = $importer->deployContent();
+  $result_info = $importer->deployContent($force_update);
   $importer->importUrlAliases();
 
   // Display results.

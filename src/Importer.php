@@ -10,6 +10,7 @@ use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\default_content\ScannerInterface;
 use Drupal\hal\LinkManager\LinkManagerInterface;
 use Drupal\user\EntityOwnerInterface;
+use Drush\Log\LogLevel;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Serializer\Serializer;
 
@@ -55,10 +56,12 @@ class Importer extends \Drupal\default_content\Importer {
   /**
    * Import data from JSON and create new entities, or update existing.
    *
+   * @param $force_update
+   *   TRUE for overwrite entities with matching ID but different UUID.
    * @return array
    * @throws \Exception
    */
-  public function deployContent() {
+  public function deployContent($force_update) {
     $created = [];
     $result_info = [
       'processed' => 0,
@@ -186,11 +189,16 @@ class Importer extends \Drupal\default_content\Importer {
           // If YES, then we can update it or skip.
           // @todo Replace deprecated entity_load().
           elseif ($current_entity_object = entity_load($entity_type_id, $entity->id())) {
-            print ('--------- exists --------- force update ------');
-            $entity->enforceIsNew(FALSE);
-            // Or we can protect existing entities (by ID). Drush option?
-            // @todo In that case, we use continue;
-            // continue;
+            if ($force_update) {
+              //@todo Remove print after test.
+              drush_print('--------- force update existing content ------');
+              $entity->enforceIsNew(FALSE);
+            }
+            else {
+              // Protect and skip existing entity with different UUID.
+              drush_print($this->getEntityInfo($entity) . ' was protected due different UUID. Use drush --force-update option to replace it with imported content.');
+              continue;
+            }
           }
           else {
             // Imported entity is not exists - let's create new one.
@@ -305,6 +313,17 @@ class Importer extends \Drupal\default_content\Importer {
     print("\n");
     print('Imported Utime = ' . date('Y-m-d H:i:s', $entity_changed_time));
     print("\n");
+  }
+
+  /**
+   * @param \Drupal\Core\Entity\Entity $entity
+   */
+  protected function getEntityInfo(Entity $entity) {
+    $output = ('ID: ' . $entity->id());
+    $output .= (' Label: ' . $entity->label());
+    $output .= (' Entity type/bundle = ' . $entity->getEntityType()
+        ->getLabel() . '/' . $entity->bundle());
+    return $output;
   }
 
 }
