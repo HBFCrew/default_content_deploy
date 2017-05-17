@@ -9,7 +9,7 @@ Class SandboxController extends  \Drupal\Core\Controller\ControllerBase {
 
     dpr('Deployment test start...');
 
-    \Drupal::service('default_content_deploy.deploy')->deployContent();
+    \Drupal::service('default_content_deploy.importer')->deployContent(TRUE);
 
     dpr('Deployment test end.');
 
