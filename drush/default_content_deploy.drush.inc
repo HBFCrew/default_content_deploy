@@ -82,6 +82,7 @@ function default_content_deploy_drush_command() {
     'examples' => [
       'drush dcdi' => 'Import content. Existing older content with matching UUID will be updated. Newer content and existing content with different UUID will be ignored.',
       'drush dcdi --force-update' => 'Import content but existing content with different UUID will be updated (recommended for better content synchronization).',
+      'drush dcdi --verbose' => 'Print detailed information about importing entities.',
     ],
   ] + $base;
 
@@ -196,14 +197,14 @@ function drush_default_content_deploy_export_aliases() {
  * @example drush dcdi
  */
 function drush_default_content_deploy_import() {
-  $force_update = drush_get_option('force-update', '');
+  $force_update = drush_get_option('force-update');
   /** @var \Drupal\default_content_deploy\Importer $importer */
   $importer = \Drupal::service('default_content_deploy.importer');
   $result_info = $importer->deployContent($force_update);
   $importer->importUrlAliases();
 
   // Display results.
-  drush_log(t('Deployed @count entities.', ['@count' => $result_info['processed']]), 'success');
+  drush_log(t('@count entities have been imported.', ['@count' => $result_info['processed']]), 'success');
   drush_print(t('- created: @count', ['@count' => $result_info['created']]));
   drush_print(t('- updated: @count', ['@count' => $result_info['updated']]));
   drush_print(t('- skipped: @count', ['@count' => $result_info['skipped']]));

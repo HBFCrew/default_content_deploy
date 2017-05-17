@@ -58,8 +58,9 @@ class Importer extends \Drupal\default_content\Importer {
   /**
    * Import data from JSON and create new entities, or update existing.
    *
-   * @param $force_update
+   * @param bool $force_update
    *   TRUE for overwrite entities with matching ID but different UUID.
+   *
    * @return array
    * @throws \Exception
    */
@@ -144,6 +145,14 @@ class Importer extends \Drupal\default_content\Importer {
           /** @var \Drupal\Core\Entity\Entity $entity */
           $entity = $this->serializer->deserialize($contents, $class, 'hal_json', ['request_method' => 'POST']);
 
+          if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
+            print("\n" . t("@count. @entity_type_id/id @id", [
+              '@count' => $result_info['processed'],
+              '@entity_type_id' => $entity_type_id,
+                '@id' => $entity->id()
+              ]) . "\t");
+          }
+
           // Here is start of injected code for Entity update.
           // Test if entity (defined by UUID) already exists.
           // @todo Replace deprecated entityManager().
@@ -151,6 +160,9 @@ class Importer extends \Drupal\default_content\Importer {
             ->loadEntityByUuid($entity_type_id, $entity->uuid())
           ) {
             // Yes, entity already exists.
+            if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
+              print(t("exists"));
+            }
             // Get the last update timestamps if available.
             if (method_exists($current_entity, 'getChangedTime')) {
               /** @var \Drupal\Core\Entity\EntityChangedTrait $entity */
@@ -171,6 +183,9 @@ class Importer extends \Drupal\default_content\Importer {
             // Check if destination entity is older than existing content.
             if ($current_entity_changed_time < $entity_changed_time) {
               // Update existing older entity with newer one.
+              if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
+                print(" - " . t("update") . "\t");
+              }
               /** @var \Drupal\Core\Entity\Entity $entity */
               $entity->{$entity->getEntityType()
                 ->getKey('id')} = $current_entity->id();
@@ -185,12 +200,15 @@ class Importer extends \Drupal\default_content\Importer {
             else {
               // Skip entity. No update. Newer or the same content
               // already exists.
+              if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
+                print(" - " . t("skip") . "\t");
+              }
               $result_info['skipped']++;
               continue;
             }
           }
           // Non-existing UUID. Test if exists Current entity by ID (not UUID).
-          // If YES, then we can update it or skip.
+          // If YES, then we can replace it or skip - or update user uuid and name.
           // @todo Replace deprecated entity_load().
           elseif ($current_entity_object = entity_load($entity_type_id, $entity->id())) {
             if ($force_update) {
@@ -199,23 +217,36 @@ class Importer extends \Drupal\default_content\Importer {
               if ($entity_type_id == 'user') {
                 $this->updateUserEntity($entity->id(), $entity->uuid(), $entity->label());
                 $result_info['updated']++;
+                if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
+                  print(t("force-update") . "\t");
+                }
                 // That is all. Go to next entity.
                 continue;
               }
-              // Others entities will be updated during entity->save().
-              $entity->enforceIsNew(FALSE);
-              print "Force update: ID = ". $entity->id() ." UUID: ". $current_entity_object->uuid() . "->" . $entity->uuid() . "<br>";
+              // Another old entities must be deleted and save again with new content.
+              $current_entity_object->delete();
+              $entity->enforceIsNew(TRUE);
+              if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
+                print(t("delete+create") . "\t");
+              }
+
             }
             else {
               // Protect and skip existing entity with different UUID.
-              print($this->getEntityInfo($entity) . ' was ignored due to different UUID. Use drush --force-update option to replace it with imported content.');
               $result_info['skipped']++;
+              if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
+                print(t("Ignored due to different UUID. Use drush --force-update option to replace it with imported content.") . "\n");
+              }
               continue;
             }
           }
           else {
             // Imported entity is not exists - let's create new one.
             $entity->enforceIsNew(TRUE);
+            if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
+              print(t("new - create") . "\t");
+            }
+
           }
 
           // Ensure that the entity is not owned by the anonymous user.
@@ -250,6 +281,10 @@ class Importer extends \Drupal\default_content\Importer {
     $this->resetTree();
     // Reset link domain.
     $this->linkManager->setLinkDomain(FALSE);
+
+    if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
+      print("\n------------\n");
+    }
 
     return $result_info;
   }

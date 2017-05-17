@@ -12,8 +12,8 @@ A default content deploy solution for Drupal 8.
 * Maintainers
  
 
-How does it work
-----------------
+Introduction
+------------
 This module allows build site totally without database transfer. 
 Developer team can deploy all content via Git.
 
@@ -34,10 +34,13 @@ Requirements
 Deprecated: For successful syncing content between sites, you need to have identical UUIDs for
 Admin user and Anonymous user. @see drush dcd-sync command.
 
+@todo Use config-set Site UUID
+
 
 Install
 -------
 Type `composer require jakubhnilicka/default-content-deploy` in your project root
+@todo Replace with new repository URL.
 
 Configuration
 -------------
@@ -127,15 +130,24 @@ Import all the content defined in a module.
 - Existing entity is updated if imported entity is newer (by time changed).
 - Existing entity with the same time is skipped.
 - If the new entity ID is already occupied by some existing entity, it is skipped.
-- This behavior can be changed by parameter *--force-update*, 
-which will cause the existing entity to be overwritten by the imported entity.
-- There is an exception for a user-type entity that only updates the UUID and the name, 
-because overwriting a user entity would result in blocked user without password and email.
+- This behavior can be changed by parameter *--force-update*
+
+*drush dcdi --force-update*
+- Existing entity is overwritten by the imported entity 
+  (the old entity is deleted and a new entity with the same ID is created from imported JSON file).
+- There is an exception for the user-type entity that only updates the UUID and the name, 
+  because overwriting a user entity would result in blocked user without password and email 
+  (the user entity export JSON file doesn't contain these informations).
+
+*drush dcdi --verbose*
+- Print detailed information about importing entities.
 
 Examples:
 
     drush dcdi
     drush dcdi --force-update
+    drush dcdi --verbose
+    drush dcdi --verbose --force-update
 
 
 
@@ -152,11 +164,12 @@ Examples:
 Workflow - how to export and deploy content
 -------------------------------------------
 
-@todo
+@todo Git workflow
+@todo Jenkins workflow
 
 
-Protecting content data files
------------------------------
+Protecting exported content data files
+--------------------------------------
 There could be security problem, if anonymous user knows UUID of desired content
 and knows it is stored in specific module, then user could determine the URL 
 to desired content without permission.
