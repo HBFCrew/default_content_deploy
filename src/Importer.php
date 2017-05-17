@@ -47,6 +47,8 @@ class Importer extends \Drupal\default_content\Importer {
    *   Defines relation domain URI for entity links.
    * @param \Drupal\Core\Session\AccountSwitcherInterface $account_switcher
    *   The account switcher.
+   * @param \Drupal\default_content_deploy\DefaultContentDeployBase $dcdBase
+   *   DefaultContentDeployBase.
    */
   public function __construct(Serializer $serializer, EntityTypeManagerInterface $entity_type_manager, LinkManagerInterface $link_manager, EventDispatcherInterface $event_dispatcher, ScannerInterface $scanner, $link_domain, AccountSwitcherInterface $account_switcher, DefaultContentDeployBase $dcdBase) {
     parent::__construct($serializer, $entity_type_manager, $link_manager, $event_dispatcher, $scanner, $link_domain, $account_switcher);
@@ -61,7 +63,7 @@ class Importer extends \Drupal\default_content\Importer {
    * @return array
    * @throws \Exception
    */
-  public function deployContent($force_update) {
+  public function deployContent($force_update = FALSE) {
     $created = [];
     $result_info = [
       'processed' => 0,
@@ -131,6 +133,9 @@ class Importer extends \Drupal\default_content\Importer {
       $sorted = $this->sortTree($this->graph);
       foreach ($sorted as $link => $details) {
         if (!empty($file_map[$link])) {
+
+          $result_info['processed']++;
+
           $file = $file_map[$link];
           $entity_type_id = $file->entity_type_id;
           $class = $this->entityTypeManager->getDefinition($entity_type_id)
@@ -138,7 +143,6 @@ class Importer extends \Drupal\default_content\Importer {
           $contents = $this->parseFile($file);
           /** @var \Drupal\Core\Entity\Entity $entity */
           $entity = $this->serializer->deserialize($contents, $class, 'hal_json', ['request_method' => 'POST']);
-
 
           // Here is start of injected code for Entity update.
           // Test if entity (defined by UUID) already exists.
@@ -162,7 +166,7 @@ class Importer extends \Drupal\default_content\Importer {
               $entity_changed_time = 1;
             }
 
-            $this->printEntityTimeInfo($entity, $current_entity_changed_time, $entity_changed_time);
+            //$this->printEntityTimeInfo($entity, $current_entity_changed_time, $entity_changed_time);
 
             // Check if destination entity is older than existing content.
             if ($current_entity_changed_time < $entity_changed_time) {
@@ -190,13 +194,22 @@ class Importer extends \Drupal\default_content\Importer {
           // @todo Replace deprecated entity_load().
           elseif ($current_entity_object = entity_load($entity_type_id, $entity->id())) {
             if ($force_update) {
-              //@todo Remove print after test.
-              drush_print('--------- force update existing content ------');
+              // Don't recreate existing user entity, because it would be blocked
+              // and without password. Only update its UUID and name.
+              if ($entity_type_id == 'user') {
+                $this->updateUserEntity($entity->id(), $entity->uuid(), $entity->label());
+                $result_info['updated']++;
+                // That is all. Go to next entity.
+                continue;
+              }
+              // Others entities will be updated during entity->save().
               $entity->enforceIsNew(FALSE);
+              print "Force update: ID = ". $entity->id() ." UUID: ". $current_entity_object->uuid() . "->" . $entity->uuid() . "<br>";
             }
             else {
               // Protect and skip existing entity with different UUID.
-              drush_print($this->getEntityInfo($entity) . ' was protected due different UUID. Use drush --force-update option to replace it with imported content.');
+              print($this->getEntityInfo($entity) . ' was ignored due to different UUID. Use drush --force-update option to replace it with imported content.');
+              $result_info['skipped']++;
               continue;
             }
           }
@@ -228,7 +241,6 @@ class Importer extends \Drupal\default_content\Importer {
               'Entity (type: @type/@bundle, ID: @id) @method successfully from @file',
               $saved_entity_log_info
             );
-
         }
       }
       //$this->eventDispatcher->dispatch(DefaultContentEvents::IMPORT, new ImportEvent($created, $module));
@@ -305,7 +317,7 @@ class Importer extends \Drupal\default_content\Importer {
     print("\n");
     print('Label: ' . $entity->label());
     print("\n");
-    print('Entity type/bundle = ' . $entity->getEntityType()
+    print('Entity type/bundle: ' . $entity->getEntityType()
         ->getLabel() . '/' . $entity->bundle());
     print("\n");
 
@@ -321,9 +333,41 @@ class Importer extends \Drupal\default_content\Importer {
   protected function getEntityInfo(Entity $entity) {
     $output = ('ID: ' . $entity->id());
     $output .= (' Label: ' . $entity->label());
-    $output .= (' Entity type/bundle = ' . $entity->getEntityType()
+    $output .= (' Entity type/bundle: ' . $entity->getEntityType()
         ->getLabel() . '/' . $entity->bundle());
     return $output;
   }
 
+  /**
+   * Update UUID and name of the user entity given by UID.
+   *
+   * @param int $uid
+   *   User entity ID (UID).
+   * @param string $uuid
+   *   New UUID.
+   * @param string $userName
+   *   New name.
+   */
+  protected function updateUserEntity($uid, $uuid, $userName) {
+    $this->dcdBase->database->update('users')
+      ->fields(
+        [
+          'uuid' => $uuid,
+        ]
+      )
+      ->condition('uid', $uid)
+      ->execute();
+
+    $this->dcdBase->database->update('users_field_data')
+      ->fields(
+        [
+          'name' => $userName,
+        ]
+      )
+      ->condition('uid', $uid)
+      ->execute();
+  }
+
 }
+
+

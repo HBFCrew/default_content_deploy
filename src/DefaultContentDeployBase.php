@@ -17,7 +17,7 @@ class DefaultContentDeployBase {
 
   const ALIAS_NAME = 'aliases';
 
-  protected $database;
+  public $database;
 
   protected $importer;
 
