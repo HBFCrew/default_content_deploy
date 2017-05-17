@@ -15,7 +15,7 @@ A default content deploy solution for Drupal 8.
 How does it work
 ----------------
 This module allows build site totally without database transfer. 
-Developer team can deploy all data via Git.
+Developer team can deploy all content via Git.
 
 It requires Default content for D8 module and provide useful shortcuts 
 for export/import function with drush and CI.
@@ -28,15 +28,24 @@ Requirements
 **Modules**
 - default_content (http://link)
 - file_entity (if you need export/import files, f.e. images, attachments)
+    - You need patch from https://www.drupal.org/node/2877678 due to old dependency since Drupal core 8.3.0.
 
 **Sites synchronization settings**
-For successful syncing content between sites, you need to have identical UUIDs for
+Deprecated: For successful syncing content between sites, you need to have identical UUIDs for
 Admin user and Anonymous user. @see drush dcd-sync command.
 
 
 Install
 -------
 Type `composer require jakubhnilicka/default-content-deploy` in your project root
+
+Configuration
+-------------
+Set DCD content directory in settings.php. We recommend place directory out of the document root. 
+
+Example:
+
+        $config_directories['content'] = '../content';
 
 
 Drush commands
@@ -111,6 +120,24 @@ Import path aliases from alias/url_aliases.json.
 
 Import all the content defined in a module.
 
+*Important Import rules:*
+- Entity is determined by UUID (new or existing).
+- ID of entity is preserved, so entity can not change its ID.
+- New entity is created as new entity with given ID.
+- Existing entity is updated if imported entity is newer (by time changed).
+- Existing entity with the same time is skipped.
+- If the new entity ID is already occupied by some existing entity, it is skipped.
+- This behavior can be changed by parameter *--force-update*, 
+which will cause the existing entity to be overwritten by the imported entity.
+- There is an exception for a user-type entity that only updates the UUID and the name, 
+because overwriting a user entity would result in blocked user without password and email.
+
+Examples:
+
+    drush dcdi
+    drush dcdi --force-update
+
+
 
 **drush dcd-uuid-info**
 
@@ -137,12 +164,13 @@ to desired content without permission.
 Example of attacker URL: 
 http://example.com/modules/custom/module_name/content/node/uuid_name.json
 
-### Protection:
-You can remove module on production server after use or you should secure access to data files via .htaccess or nginx configuration.
+### Security:
+Place module content directory out of server document root. It should not be accessible from web server.
+If it is not possible, you should secure access to content data files via .htaccess or nginx configuration.
 
 Example for Nginx host config:
 
-    location ~ .*/default_content_deploy/.*.json$ {
+    location ~ .*/default_content_deploy_content/.*.json$ {
       return 403;
     }
 
