@@ -7,6 +7,7 @@ use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\Entity;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
+use Drupal\default_content\Importer as DCImporter;
 use Drupal\default_content\ScannerInterface;
 use Drupal\hal\LinkManager\LinkManagerInterface;
 use Drupal\node\Entity\Node;
@@ -22,7 +23,7 @@ use Symfony\Component\Serializer\Serializer;
  *   \Drupal\default_content\Importer::importContent with injected code for
  *   content update. We are waiting for better DC code structure in a future.
  */
-class Importer extends \Drupal\default_content\Importer {
+class Importer extends DCImporter {
 
   /**
    * @var bool
