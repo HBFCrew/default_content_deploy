@@ -217,8 +217,7 @@ function drush_default_content_deploy_import() {
   // Perform update.
   $result_info = $importer->deployContent($force_update, TRUE);
   $import_status = $importer->importUrlAliases();
-
-
+  
   // Display results.
   drush_log(dt('@count entities have been imported.', ['@count' => $result_info['processed']]), 'success');
   drush_print(dt('- created: @count', ['@count' => $result_info['created']]));
