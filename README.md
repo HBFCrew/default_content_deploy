@@ -48,7 +48,7 @@ Set DCD content directory in settings.php. We recommend place directory out of t
 
 Example:
 
-        $config_directories['content'] = '../content';
+        $config['content_directory'] = '../content';
 
 
 Drush commands
