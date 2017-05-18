@@ -1,0 +1,5 @@
+default_content_deploy.import:
+  title: 'Default Content Deploy - Import'
+  description: 'Perform content import (drush dcdi) via UI.'
+  route_name: default_content_deploy.import
+  parent: system.admin_config_development

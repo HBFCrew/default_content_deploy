@@ -81,7 +81,7 @@ function default_content_deploy_drush_command() {
     ],
     'examples' => [
       'drush dcdi' => 'Import content. Existing older content with matching UUID will be updated. Newer content and existing content with different UUID will be ignored.',
-      'drush dcdi --force-update' => 'Import content but existing content with different UUID will be updated (recommended for better content synchronization).',
+      'drush dcdi --force-update' => 'Import content but existing content with different UUID will be replaced (recommended for better content synchronization).',
       'drush dcdi --verbose' => 'Print detailed information about importing entities.',
     ],
   ] + $base;
@@ -204,6 +204,8 @@ function drush_default_content_deploy_import() {
   $force_update = drush_get_option('force-update');
   /** @var \Drupal\default_content_deploy\Importer $importer */
   $importer = \Drupal::service('default_content_deploy.importer');
+
+  // Perform read only update.
   $result_info = $importer->deployContent($force_update, FALSE);
   drush_print(dt('@count entities will be imported.', ['@count' => $result_info['processed']]));
   drush_print(dt('- created: @count', ['@count' => $result_info['created']]));
@@ -212,14 +214,21 @@ function drush_default_content_deploy_import() {
   if(!drush_confirm(dt('Do you really want to continue?'))) {
     return drush_user_abort();
   }
+  // Perform update.
   $result_info = $importer->deployContent($force_update, TRUE);
-  $importer->importUrlAliases();
+  $import_status = $importer->importUrlAliases();
+
 
   // Display results.
   drush_log(dt('@count entities have been imported.', ['@count' => $result_info['processed']]), 'success');
   drush_print(dt('- created: @count', ['@count' => $result_info['created']]));
   drush_print(dt('- updated: @count', ['@count' => $result_info['updated']]));
   drush_print(dt('- skipped: @count', ['@count' => $result_info['skipped']]));
+
+  drush_log(dt('Imported @count aliases.', ['@count' => $import_status['imported']]), 'success');
+  drush_log(dt('Skipped @skipped aliases.', ['@skipped' => $import_status['skipped']]), 'success');
+
+  return FALSE;
 }
 
 /**
