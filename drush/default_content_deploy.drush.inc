@@ -128,7 +128,7 @@ function drush_default_content_deploy_export($entity_type_id) {
   $exporter = \Drupal::service('default_content_deploy.exporter');
   $count = $exporter->export($entity_type_id, $entity_bundles, $entity_ids, $skip_entities);
 
-  drush_log(t('Exported @count entities.', ['@count' => $count]), 'success');
+  drush_log(dt('Exported @count entities.', ['@count' => $count]), 'success');
 }
 
 /**
@@ -153,7 +153,7 @@ function drush_default_content_deploy_export_with_references($entity_type_id) {
   /** @var \Drupal\default_content_deploy\Exporter $exporter */
   $exporter = \Drupal::service('default_content_deploy.exporter');
   $count = $exporter->exportWithReferences($entity_type_id, $entity_bundles, $entity_ids, $skip_entities);
-  drush_log(t('Exported @count entities with references.', ['@count' => $count]), 'success');
+  drush_log(dt('Exported @count entities with references.', ['@count' => $count]), 'success');
 }
 
 /**
@@ -174,7 +174,7 @@ function drush_default_content_deploy_export_site() {
   $count = $exporter->exportSite($add_entity_type, $skip_entity_type);
 
   foreach ($count as $entity => $value) {
-    drush_log(t('Exported @count entities of type @entity.', ['@count' => $value, '@entity' => $entity]), 'success');
+    drush_log(dt('Exported @count entities of type @entity.', ['@count' => $value, '@entity' => $entity]), 'success');
   }
 }
 
@@ -188,13 +188,17 @@ function drush_default_content_deploy_export_aliases() {
   $exporter = \Drupal::service('default_content_deploy.exporter');
   $aliases = $exporter->exportUrlAliases();
 
-  drush_log(t('Exported @count aliases.', ['@count' => $aliases]), 'success');
+  drush_log(dt('Exported @count aliases.', ['@count' => $aliases]), 'success');
 }
 
 /**
  * Import all of the content from content folder.
  *
  * @example drush dcdi
+ * @example drush dcdi -y
+ * @example drush dcdi -verbose
+ * @example drush dcdi -verbose -- force-update
+ *
  */
 function drush_default_content_deploy_import() {
   $force_update = drush_get_option('force-update');
@@ -212,10 +216,10 @@ function drush_default_content_deploy_import() {
   $importer->importUrlAliases();
 
   // Display results.
-  drush_log(t('@count entities have been imported.', ['@count' => $result_info['processed']]), 'success');
-  drush_print(t('- created: @count', ['@count' => $result_info['created']]));
-  drush_print(t('- updated: @count', ['@count' => $result_info['updated']]));
-  drush_print(t('- skipped: @count', ['@count' => $result_info['skipped']]));
+  drush_log(dt('@count entities have been imported.', ['@count' => $result_info['processed']]), 'success');
+  drush_print(dt('- created: @count', ['@count' => $result_info['created']]));
+  drush_print(dt('- updated: @count', ['@count' => $result_info['updated']]));
+  drush_print(dt('- skipped: @count', ['@count' => $result_info['skipped']]));
 }
 
 /**
@@ -228,8 +232,8 @@ function drush_default_content_deploy_import_aliases() {
   $importer = \Drupal::service('default_content_deploy.importer');
   $import_status = $importer->importUrlAliases();
 
-  drush_log(t('Imported @count aliases.', ['@count' => $import_status['imported']]), 'success');
-  drush_log(t('Skipped @skipped aliases.', ['@skipped' => $import_status['skipped']]), 'success');
+  drush_log(dt('Imported @count aliases.', ['@count' => $import_status['imported']]), 'success');
+  drush_log(dt('Skipped @skipped aliases.', ['@skipped' => $import_status['skipped']]), 'success');
 }
 
 /**
@@ -241,8 +245,8 @@ function drush_default_content_deploy_uuid_info() {
   $import_status = $dcd->uuidInfo();
 
   // Display current values.
-  drush_print(t('System.site UUID = @uuid', ['@uuid' => $import_status['current_site_uuid']]));
-  drush_print(t('Anonymous user UUID = @uuid', ['@uuid' => $import_status['current_uuid_anonymous']]));
-  drush_print(t('Admin UUID = @uuid', ['@uuid' => $import_status['current_uuid_admin']]));
-  drush_print(t('Admin\'s name = @name', ['@name' => $import_status['current_admin_name']]));
+  drush_print(dt('System.site UUID = @uuid', ['@uuid' => $import_status['current_site_uuid']]));
+  drush_print(dt('Anonymous user UUID = @uuid', ['@uuid' => $import_status['current_uuid_anonymous']]));
+  drush_print(dt('Admin UUID = @uuid', ['@uuid' => $import_status['current_uuid_admin']]));
+  drush_print(dt('Admin\'s name = @name', ['@name' => $import_status['current_admin_name']]));
 }
