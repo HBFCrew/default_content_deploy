@@ -17,7 +17,7 @@ class DefaultContentDeployBase {
 
   const ALIAS_NAME = 'aliases';
 
-  public $database;
+  protected $database;
 
   protected $importer;
 
@@ -121,6 +121,36 @@ class DefaultContentDeployBase {
       ->condition('uid', 1);
     $result = $query->execute()->fetchCol('name');
     return reset($result);
+  }
+
+  /**
+   * Update UUID and name of the user entity given by UID.
+   *
+   * @param int $uid
+   *   User entity ID (UID).
+   * @param string $uuid
+   *   New UUID.
+   * @param string $userName
+   *   New name.
+   */
+  public function updateUserEntity($uid, $uuid, $userName) {
+    $this->database->update('users')
+      ->fields(
+        [
+          'uuid' => $uuid,
+        ]
+      )
+      ->condition('uid', $uid)
+      ->execute();
+
+    $this->database->update('users_field_data')
+      ->fields(
+        [
+          'name' => $userName,
+        ]
+      )
+      ->condition('uid', $uid)
+      ->execute();
   }
 
 }

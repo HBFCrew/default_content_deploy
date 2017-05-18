@@ -9,8 +9,8 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\default_content\ScannerInterface;
 use Drupal\hal\LinkManager\LinkManagerInterface;
+use Drupal\node\Entity\Node;
 use Drupal\user\EntityOwnerInterface;
-use Drush\Log\LogLevel;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Serializer\Serializer;
 
@@ -57,6 +57,10 @@ class Importer extends \Drupal\default_content\Importer {
 
   /**
    * Import data from JSON and create new entities, or update existing.
+   *
+   * Method is cloned from \Drupal\default_content\Importer::importContent.
+   * Injected code is marked in comment. Look for text:
+   * "Here is start of injected code for Entity update."
    *
    * @param bool $force_update
    *   TRUE for overwrite entities with matching ID but different UUID.
@@ -147,18 +151,16 @@ class Importer extends \Drupal\default_content\Importer {
 
           if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
             print("\n" . t("@count. @entity_type_id/id @id", [
-              '@count' => $result_info['processed'],
-              '@entity_type_id' => $entity_type_id,
+                '@count' => $result_info['processed'],
+                '@entity_type_id' => $entity_type_id,
                 '@id' => $entity->id()
               ]) . "\t");
           }
 
+
           // Here is start of injected code for Entity update.
           // Test if entity (defined by UUID) already exists.
-          // @todo Replace deprecated entityManager().
-          if ($current_entity = \Drupal::entityManager()
-            ->loadEntityByUuid($entity_type_id, $entity->uuid())
-          ) {
+          if ($current_entity = $this->loadEntityByUuid($entity_type_id, $entity->uuid())) {
             // Yes, entity already exists.
             if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
               print(t("exists"));
@@ -168,9 +170,6 @@ class Importer extends \Drupal\default_content\Importer {
               /** @var \Drupal\Core\Entity\EntityChangedTrait $entity */
               $current_entity_changed_time = $current_entity->getChangedTime();
               $entity_changed_time = $entity->getChangedTime();
-            }
-            elseif (FALSE) {
-              // @todo Try another method for update test, f.e compare file time.
             }
             else {
               // We are not able to get updated time of entity, so we will force entity update.
@@ -192,6 +191,7 @@ class Importer extends \Drupal\default_content\Importer {
               $entity->setOriginalId($current_entity->id());
               $entity->enforceIsNew(FALSE);
               try {
+                /** @var Node $entity */
                 $entity->setNewRevision(FALSE);
               }
               catch (\LogicException $e) {
@@ -209,13 +209,12 @@ class Importer extends \Drupal\default_content\Importer {
           }
           // Non-existing UUID. Test if exists Current entity by ID (not UUID).
           // If YES, then we can replace it or skip - or update user uuid and name.
-          // @todo Replace deprecated entity_load().
-          elseif ($current_entity_object = entity_load($entity_type_id, $entity->id())) {
+          elseif ($current_entity_object = $this->loadEntityById($entity_type, $entity->id())) {
             if ($force_update) {
               // Don't recreate existing user entity, because it would be blocked
               // and without password. Only update its UUID and name.
               if ($entity_type_id == 'user') {
-                $this->updateUserEntity($entity->id(), $entity->uuid(), $entity->label());
+                $this->dcdBase->updateUserEntity($entity->id(), $entity->uuid(), $entity->label());
                 $result_info['updated']++;
                 if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
                   print(t("force-update") . "\t");
@@ -374,33 +373,33 @@ class Importer extends \Drupal\default_content\Importer {
   }
 
   /**
-   * Update UUID and name of the user entity given by UID.
+   * Load entity by ID.
    *
-   * @param int $uid
-   *   User entity ID (UID).
-   * @param string $uuid
-   *   New UUID.
-   * @param string $userName
-   *   New name.
+   * @param string $entity_type
+   * @param int $id
+   * @return \Drupal\Core\Entity\EntityInterface
    */
-  protected function updateUserEntity($uid, $uuid, $userName) {
-    $this->dcdBase->database->update('users')
-      ->fields(
-        [
-          'uuid' => $uuid,
-        ]
-      )
-      ->condition('uid', $uid)
-      ->execute();
+  protected function loadEntityById($entity_type, $id) {
+    /** @var \Drupal\Core\Entity\Entity $entity */
+    return $this->entityTypeManager->getStorage($entity_type)
+      ->load($id);
+  }
 
-    $this->dcdBase->database->update('users_field_data')
-      ->fields(
-        [
-          'name' => $userName,
-        ]
-      )
-      ->condition('uid', $uid)
-      ->execute();
+  /**
+   * Load entity by UUID.
+   *
+   * @param string $entity_type_id
+   * @param string $uuid
+   *
+   * @return bool|\Drupal\Core\Entity\Entity
+   */
+  protected function loadEntityByUuid($entity_type_id, $uuid) {
+    $entityStorage = $this->entityTypeManager->getStorage($entity_type_id);
+    $entities = $entityStorage->loadByProperties(['uuid' => $uuid]);
+    if (!empty($entities)) {
+      return reset($entities);
+    }
+    return FALSE;
   }
 
 }
