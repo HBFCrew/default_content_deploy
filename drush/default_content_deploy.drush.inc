@@ -200,7 +200,15 @@ function drush_default_content_deploy_import() {
   $force_update = drush_get_option('force-update');
   /** @var \Drupal\default_content_deploy\Importer $importer */
   $importer = \Drupal::service('default_content_deploy.importer');
-  $result_info = $importer->deployContent($force_update);
+  $result_info = $importer->deployContent($force_update, FALSE);
+  drush_print(dt('@count entities will be imported.', ['@count' => $result_info['processed']]));
+  drush_print(dt('- created: @count', ['@count' => $result_info['created']]));
+  drush_print(dt('- updated: @count', ['@count' => $result_info['updated']]));
+  drush_print(dt('- skipped: @count', ['@count' => $result_info['skipped']]));
+  if(!drush_confirm(dt('Do you really want to continue?'))) {
+    return drush_user_abort();
+  }
+  $result_info = $importer->deployContent($force_update, TRUE);
   $importer->importUrlAliases();
 
   // Display results.
@@ -208,8 +216,6 @@ function drush_default_content_deploy_import() {
   drush_print(t('- created: @count', ['@count' => $result_info['created']]));
   drush_print(t('- updated: @count', ['@count' => $result_info['updated']]));
   drush_print(t('- skipped: @count', ['@count' => $result_info['skipped']]));
-
-
 }
 
 /**

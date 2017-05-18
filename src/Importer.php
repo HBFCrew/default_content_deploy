@@ -25,6 +25,11 @@ use Symfony\Component\Serializer\Serializer;
 class Importer extends \Drupal\default_content\Importer {
 
   /**
+   * @var bool
+   */
+  protected $writeEnable;
+
+  /**
    * @var \Drupal\default_content_deploy\DefaultContentDeployBase
    */
   private $dcdBase;
@@ -68,7 +73,8 @@ class Importer extends \Drupal\default_content\Importer {
    * @return array
    * @throws \Exception
    */
-  public function deployContent($force_update = FALSE) {
+  public function deployContent($force_update = FALSE, $writeEnable = FALSE) {
+    $this->writeEnable = $writeEnable;
     $created = [];
     $result_info = [
       'processed' => 0,
@@ -214,7 +220,9 @@ class Importer extends \Drupal\default_content\Importer {
               // Don't recreate existing user entity, because it would be blocked
               // and without password. Only update its UUID and name.
               if ($entity_type_id == 'user') {
-                $this->dcdBase->updateUserEntity($entity->id(), $entity->uuid(), $entity->label());
+                if ($this->writeEnable) {
+                  $this->dcdBase->updateUserEntity($entity->id(), $entity->uuid(), $entity->label());
+                }
                 $result_info['updated']++;
                 if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
                   print(t("force-update") . "\t");
@@ -223,7 +231,9 @@ class Importer extends \Drupal\default_content\Importer {
                 continue;
               }
               // Another old entities must be deleted and save again with new content.
-              $current_entity_object->delete();
+              if ($this->writeEnable) {
+                $current_entity_object->delete();
+              }
               $entity->enforceIsNew(TRUE);
               if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
                 print(t("delete+create") . "\t");
@@ -255,22 +265,23 @@ class Importer extends \Drupal\default_content\Importer {
           // Fill the saving method info for logger and report.
           $saving_method = $entity->isNew() ? 'created' : 'updated';
 
-          $entity->save();
+          if ($this->writeEnable) {
+            $entity->save();
+            $saved_entity_log_info = [
+              '@type' => $entity->getEntityTypeId(),
+              '@bundle' => $entity->bundle(),
+              '@id' => $entity->id(),
+              '@method' => $saving_method,
+              '@file' => $file->name,
+            ];
+            \Drupal::logger('default_content_deploy')
+              ->info(
+                'Entity (type: @type/@bundle, ID: @id) @method successfully from @file',
+                $saved_entity_log_info
+              );
+          }
           $created[$entity->uuid()] = $entity;
           $result_info[$saving_method]++;
-
-          $saved_entity_log_info = [
-            '@type' => $entity->getEntityTypeId(),
-            '@bundle' => $entity->bundle(),
-            '@id' => $entity->id(),
-            '@method' => $saving_method,
-            '@file' => $file->name,
-          ];
-          \Drupal::logger('default_content_deploy')
-            ->info(
-              'Entity (type: @type/@bundle, ID: @id) @method successfully from @file',
-              $saved_entity_log_info
-            );
         }
       }
       //$this->eventDispatcher->dispatch(DefaultContentEvents::IMPORT, new ImportEvent($created, $module));
@@ -288,26 +299,6 @@ class Importer extends \Drupal\default_content\Importer {
     return $result_info;
   }
 
-
-  /**
-   * @param $path_to_content_json
-   * @todo Unused? Check usage of this method.
-   */
-  public function importFiles($path_to_content_json) {
-    list($entity_type_id, $filename) = explode('/', $path_to_content_json);
-    $p = drupal_get_path('profile', 'guts');
-    $encoded_content = file_get_contents($p . '/content/' . $path_to_content_json);
-    $serializer = \Drupal::service('serializer');
-    $content = $serializer->decode($encoded_content, 'hal_json');
-    global $base_url;
-    $url = $base_url . base_path();
-    $content['_links']['type']['href'] = str_replace('http://drupal.org/', $url, $content['_links']['type']['href']);
-    $contents = $serializer->encode($content, 'hal_json');
-    $class = 'Drupal\\' . $entity_type_id . '\Entity\\' . str_replace(' ', '', ucwords(str_replace('_', ' ', $entity_type_id)));
-    $entity = $serializer->deserialize($contents, $class, 'hal_json', ['request_method' => 'POST']);
-    $entity->enforceIsNew(TRUE);
-    $entity->save();
-  }
 
   /**
    * Import url aliases.
@@ -329,7 +320,9 @@ class Importer extends \Drupal\default_content\Importer {
 
       foreach ($path_aliases as $url => $alias) {
         if (!$path_alias_storage->aliasExists($alias['alias'], $alias['langcode'])) {
-          $path_alias_storage->save($alias['source'], $alias['alias'], $alias['langcode']);
+          if ($this->writeEnable) {
+            $path_alias_storage->save($alias['source'], $alias['alias'], $alias['langcode']);
+          }
           $count++;
         }
         else {
