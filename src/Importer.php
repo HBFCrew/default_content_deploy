@@ -69,6 +69,8 @@ class Importer extends \Drupal\default_content\Importer {
    *
    * @param bool $force_update
    *   TRUE for overwrite entities with matching ID but different UUID.
+   * @param bool $writeEnable
+   *   FALSE for read only operations, TRUE for real update/delete/create.
    *
    * @return array
    * @throws \Exception
@@ -316,7 +318,7 @@ class Importer extends \Drupal\default_content\Importer {
       . DefaultContentDeployBase::ALIAS_NAME . '.json';
     if (!file_destination($file, FILE_EXISTS_ERROR)) {
       $aliases = file_get_contents($file, TRUE);
-      $path_aliases = JSON::decode($aliases);
+      $path_aliases = Json::decode($aliases);
 
       foreach ($path_aliases as $url => $alias) {
         if (!$path_alias_storage->aliasExists($alias['alias'], $alias['langcode'])) {
@@ -355,7 +357,10 @@ class Importer extends \Drupal\default_content\Importer {
   }
 
   /**
+   * Get entity info
+   *
    * @param \Drupal\Core\Entity\Entity $entity
+   * @return string
    */
   protected function getEntityInfo(Entity $entity) {
     $output = ('ID: ' . $entity->id());
