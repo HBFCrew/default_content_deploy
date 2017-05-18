@@ -58,9 +58,9 @@ class DefaultContentDeployBase {
    *   Return path to the content folder.
    */
   public function getContentFolder() {
-    global $config_directories;
-    if (isset($config_directories) && isset($config_directories['content'])) {
-      return $config_directories['content'];
+    global $config;
+    if (isset($config) && isset($config['content_directory'])) {
+      return $config['content_directory'];
     }
     else {
       $hash_salt = $this->settings->getHashSalt();
