@@ -4,4 +4,4 @@ description: 'Default Content Importer'
 package: Web services
 core: 8.x
 dependencies:
-  - default_content
+  - default_content (8.x-1.x-dev)
