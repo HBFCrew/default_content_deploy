@@ -61,10 +61,6 @@ class Exporter extends DefaultContentDeployBase {
    *   Number of exported entities.
    */
   public function exportWithReferences($entityType, $entityBundle = '', $entityIds = '', $skipEntities = '') {
-    if (!$this->validateEntityType($entityType)) {
-      throw new \InvalidArgumentException(sprintf('Entity type "%s" does not exist', $entityType));
-    }
-
     // Get entities for export.
     $exportedEntityIds = $this->getEntityIdsForExport($entityType, $entityBundle, $entityIds, $skipEntities);
     // Serialize entities and get uuids for entities.
@@ -157,6 +153,9 @@ class Exporter extends DefaultContentDeployBase {
    */
   protected function getEntityIdsForExport($entityType, $entityBundle, $entityIds, $skipEntities) {
     $exportedEntityIds = [];
+    if (!$this->validateEntityType($entityType)) {
+      throw new \InvalidArgumentException(sprintf('Entity type "%s" does not exist', $entityType));
+    }
 
     // Export by bundle.
     if (!empty($entityBundle)) {
@@ -175,12 +174,11 @@ class Exporter extends DefaultContentDeployBase {
     }
 
     // Export by entity id.
-    if (!empty($entityId)) {
+    if (!empty($entityIds)) {
       $entityIds = explode(parent::DELIMITER, $entityIds);
       $exportedEntityIds += $entityIds;
     }
 
-    // Export by entity type if bundles and ids are empty.
     if (empty($exportedEntityIds)) {
       $query = \Drupal::entityQuery($entityType);
       $entityIds = $query->execute();
