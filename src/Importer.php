@@ -10,11 +10,9 @@ use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\default_content\Importer as DCImporter;
 use Drupal\default_content\ScannerInterface;
 use Drupal\hal\LinkManager\LinkManagerInterface;
-use Drupal\node\Entity\Node;
 use Drupal\user\EntityOwnerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Serializer\Serializer;
-
 
 /**
  * A service for handling import of default content.
@@ -34,7 +32,6 @@ class Importer extends DCImporter {
    * @var \Drupal\default_content_deploy\DefaultContentDeployBase
    */
   private $dcdBase;
-
 
   /**
    * Constructs the default content deploy manager.
@@ -74,6 +71,8 @@ class Importer extends DCImporter {
    *   FALSE for read only operations, TRUE for real update/delete/create.
    *
    * @return array
+   *   Array of result information.
+   *
    * @throws \Exception
    */
   public function deployContent($force_update = FALSE, $writeEnable = FALSE) {
@@ -159,14 +158,14 @@ class Importer extends DCImporter {
           $entity = $this->serializer->deserialize($contents, $class, 'hal_json', ['request_method' => 'POST']);
 
           if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
-            print("\n" . t("@count. @entity_type_id/id @id", [
+            $message = t("@count. @entity_type_id/id @id",
+              [
                 '@count' => $result_info['processed'],
                 '@entity_type_id' => $entity_type_id,
-                '@id' => $entity->id()
-              ]) . "\t");
+                '@id' => $entity->id(),
+              ]);
+            print "\n" . $message . "\t";
           }
-
-
           // Here is start of injected code for Entity update.
           // Test if entity (defined by UUID) already exists.
           if ($current_entity = $this->loadEntityByUuid($entity_type_id, $entity->uuid())) {
@@ -181,18 +180,18 @@ class Importer extends DCImporter {
               $entity_changed_time = $entity->getChangedTime();
             }
             else {
-              // We are not able to get updated time of entity, so we will force entity update.
+              // We are not able to get updated time of entity,
+              // so we will force entity update.
               $current_entity_changed_time = 0;
               $entity_changed_time = 1;
             }
-
-            //$this->printEntityTimeInfo($entity, $current_entity_changed_time, $entity_changed_time);
 
             // Check if destination entity is older than existing content.
             if ($current_entity_changed_time < $entity_changed_time) {
               // Update existing older entity with newer one.
               if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
-                print(" - " . t("update") . "\t");
+                $message = t("update");
+                print(" - $message \t");
               }
               /** @var \Drupal\Core\Entity\Entity $entity */
               $entity->{$entity->getEntityType()
@@ -200,7 +199,7 @@ class Importer extends DCImporter {
               $entity->setOriginalId($current_entity->id());
               $entity->enforceIsNew(FALSE);
               try {
-                /** @var Node $entity */
+                /** @var \Drupal\node\Entity\Node $entity */
                 $entity->setNewRevision(FALSE);
               }
               catch (\LogicException $e) {
@@ -210,40 +209,45 @@ class Importer extends DCImporter {
               // Skip entity. No update. Newer or the same content
               // already exists.
               if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
-                print(" - " . t("skip") . "\t");
+                $message = t("skip");
+                print(" - $message \t");
               }
               $result_info['skipped']++;
               continue;
             }
           }
           // Non-existing UUID. Test if exists Current entity by ID (not UUID).
-          // If YES, then we can replace it or skip - or update user uuid and name.
+          // If YES, then we can replace it or skip
+          // - or update only user's uuid and name.
           elseif ($current_entity_object = $this->loadEntityById($entity_type, $entity->id())) {
             if ($force_update) {
-              // Don't recreate existing user entity, because it would be blocked
-              // and without password. Only update its UUID and name.
+              // Don't recreate existing user entity, because it would be
+              // blocked and without password. Only update its UUID and name.
               if ($entity_type_id == 'user') {
                 if ($this->writeEnable) {
                   $this->dcdBase->updateUserEntity($entity->id(), $entity->uuid(), $entity->label());
                 }
                 $result_info['updated']++;
                 if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
-                  print(t("force-update") . "\t");
+                  $message = t("force-update");
+                  print($message . "\t");
                 }
-                // That is all. Go to next entity.
+                // That is all. Go to the next entity.
                 continue;
               }
-              // Another old entities must be deleted and save again with new content.
+              // Another old entities must be deleted and save again
+              // with the new content.
               if ($this->writeEnable) {
                 $current_entity_object->delete();
               }
               $entity->enforceIsNew(TRUE);
               if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
-                print(t("delete+create") . "\t");
+                $message = t("delete+create");
+                print($message . "\t");
               }
-
             }
             else {
+              // No force-update.
               // Protect and skip existing entity with different UUID.
               $result_info['skipped']++;
               if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
@@ -256,9 +260,9 @@ class Importer extends DCImporter {
             // Imported entity is not exists - let's create new one.
             $entity->enforceIsNew(TRUE);
             if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
-              print(t("new - create") . "\t");
+              $message = t("new - create");
+              print($message . "\t");
             }
-
           }
 
           // Ensure that the entity is not owned by the anonymous user.
@@ -287,7 +291,6 @@ class Importer extends DCImporter {
           $result_info[$saving_method]++;
         }
       }
-      //$this->eventDispatcher->dispatch(DefaultContentEvents::IMPORT, new ImportEvent($created, $module));
       $this->accountSwitcher->switchBack();
     }
     // Reset the tree.
@@ -298,10 +301,8 @@ class Importer extends DCImporter {
     if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
       print("\n------------\n");
     }
-
     return $result_info;
   }
-
 
   /**
    * Import url aliases.
@@ -338,36 +339,19 @@ class Importer extends DCImporter {
   }
 
   /**
-   * @param \Drupal\Core\Entity\Entity $entity
-   * @param $current_entity_changed_time
-   * @param $entity_changed_time
-   */
-  protected function printEntityTimeInfo(Entity $entity, $current_entity_changed_time, $entity_changed_time) {
-    print("\n");
-    print("\n");
-    print('Label: ' . $entity->label());
-    print("\n");
-    print('Entity type/bundle: ' . $entity->getEntityType()
-        ->getLabel() . '/' . $entity->bundle());
-    print("\n");
-
-    print('Existing Utime = ' . date('Y-m-d H:i:s', $current_entity_changed_time));
-    print("\n");
-    print('Imported Utime = ' . date('Y-m-d H:i:s', $entity_changed_time));
-    print("\n");
-  }
-
-  /**
    * Get entity info
    *
    * @param \Drupal\Core\Entity\Entity $entity
+   *   Entity object.
+   *
    * @return string
+   *   Prepared info message.
    */
   protected function getEntityInfo(Entity $entity) {
     $output = ('ID: ' . $entity->id());
     $output .= (' Label: ' . $entity->label());
-    $output .= (' Entity type/bundle: ' . $entity->getEntityType()
-        ->getLabel() . '/' . $entity->bundle());
+    $output .= (' Entity type/bundle: ' . $entity->getEntityType()->getLabel()
+      . '/' . $entity->bundle());
     return $output;
   }
 
@@ -375,8 +359,12 @@ class Importer extends DCImporter {
    * Load entity by ID.
    *
    * @param string $entity_type
+   *   Name of entity type.
    * @param int $id
+   *   ID of the entity to load.
+   *
    * @return \Drupal\Core\Entity\EntityInterface
+   *   Loaded entity.
    */
   protected function loadEntityById($entity_type, $id) {
     /** @var \Drupal\Core\Entity\Entity $entity */
@@ -387,13 +375,16 @@ class Importer extends DCImporter {
   /**
    * Load entity by UUID.
    *
-   * @param string $entity_type_id
+   * @param string $entity_type
+   *   Name of entity type.
    * @param string $uuid
+   *   UUID of the entity to load.
    *
    * @return bool|\Drupal\Core\Entity\Entity
+   *   Loaded entity.
    */
-  protected function loadEntityByUuid($entity_type_id, $uuid) {
-    $entityStorage = $this->entityTypeManager->getStorage($entity_type_id);
+  protected function loadEntityByUuid($entity_type, $uuid) {
+    $entityStorage = $this->entityTypeManager->getStorage($entity_type);
     $entities = $entityStorage->loadByProperties(['uuid' => $uuid]);
     if (!empty($entities)) {
       return reset($entities);
@@ -402,5 +393,3 @@ class Importer extends DCImporter {
   }
 
 }
-
-
