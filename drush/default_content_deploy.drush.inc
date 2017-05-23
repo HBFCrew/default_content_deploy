@@ -29,7 +29,11 @@ function default_content_deploy_drush_command() {
     ],
     'required-arguments' => 1,
     'examples' => [
-      'drush dcde' => '',
+      'drush dcde node' => 'Export all nodes',
+      'drush dcde node --bundle=page' => 'Export all nodes with bundle page',
+      'drush dcde node --bundle=page,article --entity_id=2,3,4' => 'Export all nodes with bundle page or article plus nodes with entitiy id 2, 3 and 4.',
+      'drush dcde node --bundle=page,article --skip_entities=5,7' => 'Export all nodes with bundle page or article and skip nodes with entity id 5 and 7.',
+      'drush dcde node --skip_entities=5,7' => 'Export all nodes and skip nodes with entity id 5 and 7.',
     ],
   ] + $base;
 
@@ -47,7 +51,11 @@ function default_content_deploy_drush_command() {
     ],
     'required-arguments' => 1,
     'examples' => [
-      'drush dcder' => '',
+      'drush dcde node' => 'Export all nodes with references',
+      'drush dcde node --bundle=page' => 'Export all nodes with references with bundle page',
+      'drush dcde node --bundle=page,article --entity_id=2,3,4' => 'Export all nodes with references with bundle page or article plus nodes with entitiy id 2, 3 and 4.',
+      'drush dcde node --bundle=page,article --skip_entities=5,7' => 'Export all nodes with references with bundle page or article and skip nodes with entity id 5 and 7.',
+      'drush dcde node --skip_entities=5,7' => 'Export all nodes and skip nodes with references with entity id 5 and 7.',
     ],
   ] + $base;
 
@@ -59,9 +67,9 @@ function default_content_deploy_drush_command() {
       'skip_entity_type' => dt('The entity types to skip.'),
     ],
     'examples' => [
-      'drush dcdes' => '',
-      'drush dcdes --add_entity_type=collection,my_custom_entity' => '',
-      'drush dcdes --skip_entity_type=node,user' => '',
+      'drush dcdes' => 'Export complete website.',
+      'drush dcdes --add_entity_type=collection,my_custom_entity' => 'Export complete website plus custom entities collection and my_custom_entity.',
+      'drush dcdes --skip_entity_type=node,user' => 'Export complete website but skip nodes and users.',
     ],
   ] + $base;
 
@@ -69,7 +77,7 @@ function default_content_deploy_drush_command() {
     'aliases' => ['dcdea'],
     'description' => dt('Exports site url aliases.'),
     'examples' => [
-      'drush dcdea' => '',
+      'drush dcdea' => 'Export url aliases.',
     ],
   ] + $base;
 
@@ -90,7 +98,7 @@ function default_content_deploy_drush_command() {
     'aliases' => ['dcdia'],
     'description' => dt('Import site url aliases.'),
     'examples' => [
-      'drush dcdia' => '',
+      'drush dcdia' => 'Import url aliases.',
     ],
   ] + $base;
 
