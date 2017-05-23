@@ -1,5 +1,5 @@
 {
-  "name": "jakubhnilicka/default-content-deploy",
+  "name": "HBFCrew/default_content_deploy",
   "type": "drupal-module",
   "description": "Drupal 8 module for deploying content in *.json files. Sponsored by: HBF s.r.o., http://hbf.sk",
   "minimum-stability": "dev",
