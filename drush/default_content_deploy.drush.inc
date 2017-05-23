@@ -47,7 +47,6 @@ function default_content_deploy_drush_command() {
       'entity_id' => dt('The ID of the entity to export.'),
       'bundle' => dt('Write out the exported bundle of entity'),
       'skip_entities' => dt('The ID of the entity to skip.'),
-      'skip_core_users' => dt('Do not export user entities created by core'),
     ],
     'required-arguments' => 1,
     'examples' => [
