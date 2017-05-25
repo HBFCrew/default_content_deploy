@@ -33,10 +33,15 @@ class DefaultContentDeployBase {
    * DefaultContentDeployBase constructor.
    *
    * @param \Drupal\Core\Database\Connection $database
+   *   DB connection.
    * @param \Drupal\default_content\Exporter $exporter
+   *   Exporter.
    * @param \Drupal\Core\Site\Settings $settings
+   *   Settings.
    * @param \Drupal\Core\Entity\EntityTypeManager $entityTypeManager
+   *   Entity Type Manager.
    * @param \Symfony\Component\Serializer\Serializer $serializer
+   *   Serializer.
    */
   public function __construct(Connection $database, Exporter $exporter, Settings $settings, EntityTypeManager $entityTypeManager, Serializer $serializer) {
     $this->database = $database;
@@ -68,12 +73,14 @@ class DefaultContentDeployBase {
     }
   }
 
-
   /**
+   * Get UUID info
+   *
    * Get System site, Admin and Anonymous UUIDs and Admin's name
    * and display current values.
    *
    * @return array
+   *   Array with info.
    */
   public function uuidInfo() {
     // Site UUID.
