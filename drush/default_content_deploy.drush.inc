@@ -214,11 +214,12 @@ function drush_default_content_deploy_import() {
 
   // Perform read only update.
   $result_info = $importer->deployContent($force_update, FALSE);
-  drush_print(dt('@count entities will be imported.', ['@count' => $result_info['processed']]));
+  drush_print(dt('@count entities will be processed.', ['@count' => $result_info['processed']]));
   drush_print(dt('- created: @count', ['@count' => $result_info['created']]));
   drush_print(dt('- updated: @count', ['@count' => $result_info['updated']]));
   drush_print(dt('- skipped: @count', ['@count' => $result_info['skipped']]));
-  if (!drush_confirm(dt('Do you really want to continue?'))) {
+  $entities_todo = $result_info['created'] + $result_info['updated'];
+  if ($entities_todo == 0 || !drush_confirm(dt('Do you really want to continue?'))) {
     return drush_user_abort();
   }
   // Perform update.
@@ -226,7 +227,7 @@ function drush_default_content_deploy_import() {
   $import_status = $importer->importUrlAliases();
 
   // Display results.
-  drush_log(dt('@count entities have been imported.', ['@count' => $result_info['processed']]), 'success');
+  drush_log(dt('@count entities have been processed.', ['@count' => $result_info['processed']]), 'success');
   drush_print(dt('- created: @count', ['@count' => $result_info['created']]));
   drush_print(dt('- updated: @count', ['@count' => $result_info['updated']]));
   drush_print(dt('- skipped: @count', ['@count' => $result_info['skipped']]));
