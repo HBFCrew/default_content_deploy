@@ -6,14 +6,9 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
- * @file
- *
- * Created by PhpStorm.
- * User: Marty
- * Date: 18. 5. 2017
- * Time: 16:05
+ * Config Form for run DCD deploy in Admin UI.
  */
-class ImportForm extends FormBase  {
+class ImportForm extends FormBase {
 
   /**
    * {@inheritdoc}
@@ -41,7 +36,7 @@ class ImportForm extends FormBase  {
       '#type' => 'checkbox',
       '#title' => t('Force update'),
       '#description' => $this->t('Import content but existing content with different UUID will be replaced (recommended for better content synchronization).'),
-      '#default_value' => true,
+      '#default_value' => TRUE,
     ];
 
     $form['import'] = [
@@ -65,9 +60,12 @@ class ImportForm extends FormBase  {
     $result_info = \Drupal::service('default_content_deploy.importer')->deployContent($forceUpdate, TRUE);
     $message = t('@count entities have been imported.', ['@count' => $result_info['processed']]);
     $message .= " ";
-    $message .= t('created: @count, ', ['@count' => $result_info['created']]);
-    $message .= t('updated: @count, ', ['@count' => $result_info['updated']]);
+    $message .= t('created: @count', ['@count' => $result_info['created']]);
+    $message .= ', ';
+    $message .= t('updated: @count', ['@count' => $result_info['updated']]);
+    $message .= ', ';
     $message .= t('skipped: @count', ['@count' => $result_info['skipped']]);
     drupal_set_message($message);
   }
+
 }

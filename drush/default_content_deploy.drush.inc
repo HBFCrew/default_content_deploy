@@ -2,19 +2,17 @@
 
 /**
  * @file
- * Drush integration for the default_content module.
- *
- * @todo Remove site UUID sync? This value must be set before install of this module.
+ * Drush integration for the default_content_deploy module.
  */
 
 /**
  * Implements hook_drush_command().
  */
 function default_content_deploy_drush_command() {
-  $base = array(
-    'core' => array('8+'),
-    'drupal dependencies' => array('default_content'),
-  );
+  $base = [
+    'core' => ['8+'],
+    'drupal dependencies' => ['default_content'],
+  ];
 
   $items['default-content-deploy-export'] = [
     'aliases' => ['dcde'],
@@ -181,7 +179,10 @@ function drush_default_content_deploy_export_site() {
   $count = $exporter->exportSite($add_entity_type, $skip_entity_type);
 
   foreach ($count as $entity => $value) {
-    drush_log(dt('Exported @count entities of type @entity.', ['@count' => $value, '@entity' => $entity]), 'success');
+    drush_log(dt('Exported @count entities of type @entity.', [
+      '@count' => $value,
+      '@entity' => $entity,
+    ]), 'success');
   }
 }
 
@@ -205,7 +206,6 @@ function drush_default_content_deploy_export_aliases() {
  * @example drush dcdi -y
  * @example drush dcdi -verbose
  * @example drush dcdi -verbose -- force-update
- *
  */
 function drush_default_content_deploy_import() {
   $force_update = drush_get_option('force-update');
@@ -218,13 +218,13 @@ function drush_default_content_deploy_import() {
   drush_print(dt('- created: @count', ['@count' => $result_info['created']]));
   drush_print(dt('- updated: @count', ['@count' => $result_info['updated']]));
   drush_print(dt('- skipped: @count', ['@count' => $result_info['skipped']]));
-  if(!drush_confirm(dt('Do you really want to continue?'))) {
+  if (!drush_confirm(dt('Do you really want to continue?'))) {
     return drush_user_abort();
   }
   // Perform update.
   $result_info = $importer->deployContent($force_update, TRUE);
   $import_status = $importer->importUrlAliases();
-  
+
   // Display results.
   drush_log(dt('@count entities have been imported.', ['@count' => $result_info['processed']]), 'success');
   drush_print(dt('- created: @count', ['@count' => $result_info['created']]));
@@ -252,6 +252,8 @@ function drush_default_content_deploy_import_aliases() {
 }
 
 /**
+ * Get UUID info
+ *
  * Get System site, Admin and Anonymous UUIDs and Admin's name
  * and display current values.
  */
