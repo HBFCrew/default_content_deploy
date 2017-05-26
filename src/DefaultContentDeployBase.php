@@ -83,13 +83,12 @@ class DefaultContentDeployBase {
    *   Array with info.
    */
   public function uuidInfo() {
-    // Site UUID.
-    // @TODO Config do __construct()
+    // @todo Config to __construct()?
     $config = \Drupal::config('system.site');
     $current_site_uuid = $config->get('uuid');
     $current_uuid_anonymous = $this->getUuidByUid(0);
     $current_uuid_admin = $this->getUuidByUid(1);
-    $current_admin_name = $this->getUid1Name();
+    $current_admin_name = $this->getAdminName();
 
     return [
       'current_site_uuid' => $current_site_uuid,
@@ -102,9 +101,11 @@ class DefaultContentDeployBase {
   /**
    * Get UUId for user by UID.
    *
-   * @param $uid
+   * @param int $uid
+   *   User ID.
    *
    * @return string
+   *   User UUID.
    */
   protected function getUuidByUid($uid): string {
     /** @var \Drupal\Core\Database\Driver\mysql\Select $query */
@@ -112,16 +113,17 @@ class DefaultContentDeployBase {
       ->fields('users', ['uuid'])
       ->condition('uid', $uid);
     $result = $query->execute()->fetchCol('uuid');
-    $current_uuid_anonymous = reset($result);
-    return $current_uuid_anonymous;
+    $uuid = reset($result);
+    return $uuid;
   }
 
   /**
-   * Get name of Admin user UID=1.
+   * Get user name of Admin (user UID=1).
    *
-   * @return string Name
+   * @return string
+   *   User name.
    */
-  protected function getUid1Name() {
+  protected function getAdminName() {
     /** @var \Drupal\Core\Database\Driver\mysql\Select $query */
     $query = $this->database->select('users_field_data')
       ->fields('users_field_data', ['name'])
