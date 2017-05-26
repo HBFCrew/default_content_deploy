@@ -1,7 +1,7 @@
 name: 'Default content deploy'
 type: module
-description: 'Default Content Importer'
+description: 'Default content deploy solution for Drupal 8. Export and import content continuously.'
 package: Web services
 core: 8.x
 dependencies:
-  - default_content (8.x-1.x-dev)
+  - default_content
