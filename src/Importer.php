@@ -168,7 +168,8 @@ class Importer extends DCImporter {
           }
           // Here is start of injected code for Entity update.
           // Test if entity (defined by UUID) already exists.
-          if ($current_entity = $this->loadEntityByUuid($entity_type_id, $entity->uuid())) {
+          $entityUuid = $entity->uuid();
+          if ($current_entity = $this->loadEntityByUuid($entity_type_id, $entityUuid)) {
             // Yes, entity already exists.
             if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
               print(t("exists"));
@@ -219,7 +220,7 @@ class Importer extends DCImporter {
           // Non-existing UUID. Test if exists Current entity by ID (not UUID).
           // If YES, then we can replace it or skip
           // - or update only user's uuid and name.
-          elseif ($current_entity_object = $this->loadEntityById($entity_type, $entity->id())) {
+          elseif ($current_entity_object = $this->loadEntityById($entity_type_id, $entity->id())) {
             if ($force_update) {
               // Don't recreate existing user entity, because it would be
               // blocked and without password. Only update its UUID and name.
@@ -368,8 +369,9 @@ class Importer extends DCImporter {
    */
   protected function loadEntityById($entity_type, $id) {
     /** @var \Drupal\Core\Entity\Entity $entity */
-    return $this->entityTypeManager->getStorage($entity_type)
-      ->load($id);
+    $entityStorage = $this->entityTypeManager->getStorage($entity_type);
+    $entity = $entityStorage->load($id);
+    return $entity;
   }
 
   /**
