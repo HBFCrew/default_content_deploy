@@ -12,3 +12,6 @@ default_content_deploy.import:
     _title: 'Default Content Deploy - Import'
   requirements:
     _permission: 'import content'
+  options:
+    _admin_route: TRUE
+

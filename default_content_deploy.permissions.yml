@@ -1,0 +1,4 @@
+import content:
+  description: 'Allows user to import exported content via UI. It will overwrite existing content.'
+  title: 'Import content'
+  restrict access: TRUE
