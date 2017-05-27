@@ -55,7 +55,7 @@ If you need to sychronize configuration, use drush **config-set** for set Site U
 # Configuration
 
 Set DCD content directory in settings.php. We recommend to place directory outside of the document root. 
-@todo Zmínit automatické vytvoření adresáře 'public://content_' . $hash_salt;
+If no configuration is found, directory is created automatically at 'public://content_' . $hash_salt;
 
 **Example**
 
