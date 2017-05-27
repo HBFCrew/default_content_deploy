@@ -154,7 +154,9 @@ class Importer extends DCImporter {
           $class = $this->entityTypeManager->getDefinition($entity_type_id)
             ->getClass();
           $contents = $this->parseFile($file);
+          // Warning! deserialize method will create file from exported JSON.
           /** @var \Drupal\Core\Entity\Entity $entity */
+          // $entity = $this->serializer->decode($contents, 'hal_json', ['request_method' => 'POST']);
           $entity = $this->serializer->deserialize($contents, $class, 'hal_json', ['request_method' => 'POST']);
 
           if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
@@ -188,7 +190,9 @@ class Importer extends DCImporter {
             }
 
             // Check if destination entity is older than existing content.
-            if ($current_entity_changed_time < $entity_changed_time) {
+            // Always skip users, because update user
+            //   caused blocked user without password.
+            if ($entity_type_id != 'user' && $current_entity_changed_time < $entity_changed_time) {
               // Update existing older entity with newer one.
               if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
                 $message = t("update");
