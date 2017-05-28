@@ -248,7 +248,7 @@ another requires identical configuration of entities (e.g. identical fields in
 identically named bundles). That is why we include configuration synchronization 
 to the teamworkflow. 
 
-There are many articles about export/import configuration, so thi s is only a 
+There are many articles about export/import configuration, so this is only a 
 sumarization of the most important things.
 
 ## Initiate project and Synchronize site configurations
@@ -267,7 +267,8 @@ provides the first copy of a project. He must:
          $settings['hash_salt'] = file_get_contents('../config/salt/salt.txt');
         
 3. Install Drupal project (use the same installation profile, e.g. minimal)
-4. Set (or get) Site UUID and share the value with the team. Identical Site UUID is neccessary for sharing Drupal configuration files.
+4. Set (or get) Site UUID and share the value with the team. Identical Site UUID is neccessary 
+   for sharing Drupal configuration files.
     
         drush config-get "system.site" uuid
         
@@ -287,12 +288,13 @@ install clones of the project. They must:
 1. Clone project from the Git repository
 2. Set identical information (identical setting in settings.php)
   1. Common directory for config management ($config_directories['sync'])
-  2. Common directory for content export/import ($config_directories['content'])
+  2. Common directory for content export/import ($config['content_directory'])
   3. Common file or value for Drupal salt ($settings['hash_salt'])
 3. Install Drupal with the same installation profile
 4. Set Site UUID to identical value.
         
         drush config-set "system.site" uuid "112233…8899"
+        
 5. Import configuration
         
         drush cim
@@ -308,9 +310,11 @@ entities are exported, so we recommend to start exporting content with all refer
 **Developer pusher**
 
 1. Creates some testing content
-2. Export content. There are many ways to export content via drush, from one entity to the entire site (the easiest way).
+2. Export content. There are many ways to export content via drush, 
+   from one entity to the entire site (the easiest way).
   
         drush dcdes
+        
 3. Commit and push exported files to common Git repository
   
         git commit
