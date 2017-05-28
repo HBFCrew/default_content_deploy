@@ -74,16 +74,16 @@ You can export only one entity, bunch of entities, entities by type or export wh
 
 Exports a single entity or group of entities with no references.
 
-###Arguments
+### Arguments
 
 * **entity_type** - Entity type (e.g. node, user, taxonomy/term…)
 
-###Options
+### Options
 * **entity_id** - ID of entity for export.
 * **bundle** - Entity bundle, e.g. content type for nodes.
 * **skip_entities** - ID of entity to skip.
 
-###Examples
+### Examples
 
     drush dcde node --bundle=page
     Export all nodes with bundle (content type) page
@@ -97,16 +97,16 @@ Exports a single entity or group of entities with no references.
     drush dcde node --skip_entities=5,7
     Export all nodes and skip nodes with entity id 5 and 7.
     
-##drush default-content-deploy-export-with-references, drush dcder
+## drush default-content-deploy-export-with-references, drush dcder
 
 Exports a single entity or group of entities with all references. 
 The options are identical in drush dcde.
 
-###Arguments
+### Arguments
 
 * **entity_type** - Entity type (e.g. node, user, taxonomy/term…)
 
-###Options
+### Options
 
 * **entity_id** - ID of entity for export.
 * **bundle** - Entity bundle, e.g. content type for nodes.
@@ -130,7 +130,7 @@ The options are identical in drush dcde.
     Export all nodes and skip nodes with references with entity id 5 and 7.
 
 
-##drush default-content-deploy-export-site, drush dcdes
+## drush default-content-deploy-export-site, drush dcdes
 
 Exports a whole site content. You can include/exclude entities by their type.
 
@@ -146,7 +146,7 @@ Entity types exported by default:
 - media
 - paragraph.
 
-###Options
+### Options
 
 * **add_entity_type** - entity types to include to export.
 * **skip_entity_type** - entity types to exclude from export.
@@ -163,7 +163,7 @@ Entity types exported by default:
     Export complete website but skip nodes and users.
 
 
-##drush default-content-deploy-export-aliases, drush dcdea
+## drush default-content-deploy-export-aliases, drush dcdea
 
 Exports URL aliases.
 
@@ -173,7 +173,7 @@ Exports URL aliases.
     Export url aliases.
 
 
-##drush default-content-deploy-import-aliases, drush dcdia
+## drush default-content-deploy-import-aliases, drush dcdia
 
 Import URL aliases.
 
@@ -183,7 +183,7 @@ Import URL aliases.
     Import url aliases.
 
 
-##drush default-content-deploy-import, drush dcdi
+## drush default-content-deploy-import, drush dcdi
 
 Deploy (import/create/update/replace) content from all exported files. 
 
@@ -192,7 +192,7 @@ in **$config['content_directory']**. It can be defined in the **settings.php**.
 See example in the Configuration section above.
 
 
-###Important rules for import content
+### Important rules for import content
 
 - Imported entity is determined by UUID (it can be either new or already existing).
 - ID of entity is preserved, so entity can not change its ID.
@@ -232,7 +232,7 @@ If you can not use Drush, go to page /admin/config/development/dcd-import.
 Check "Import content" permission. 
 
 
-##drush dcd-uuid-info
+## drush dcd-uuid-info
 
 Display current values of System Site, Admin and Anonymous UUIDs, Admin name.
 
@@ -358,7 +358,7 @@ entities are exported, so we recommend to start exporting content with all refer
     5. drush dcdi —force-update
 
 
-## Jenkins and tools for continous development
+## Jenkins and tools for continous development / integration
 
 Imagine Jenkins like one of the developers in the puller role but with 
 no interaction capability. His workflow can look like this:
