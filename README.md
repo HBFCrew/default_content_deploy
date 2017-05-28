@@ -200,6 +200,8 @@ See example in the Configuration section above.
 - Existing entity is updated only if imported entity is newer 
   (by timestamp of the last entity change).
 - Imported entity with the same or older time than the current existing entity is skipped.
+- If a file entity does not have an existing file, the file will be created.
+  The file will be recreated even if there is a existing file entity but its file has been deleted.  
 - If the new entity ID is already occupied by some existing entity, it is skipped.
 - This behavior can be changed by parameter *--force-update*
 
