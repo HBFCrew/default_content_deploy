@@ -156,9 +156,20 @@ class Importer extends DCImporter {
           $contents = $this->parseFile($file);
           // Warning! deserialize method will create file from exported JSON.
           /** @var \Drupal\Core\Entity\Entity $entity */
-          // $entity = $this->serializer->decode($contents, 'hal_json', ['request_method' => 'POST']);
           $entity = $this->serializer->deserialize($contents, $class, 'hal_json', ['request_method' => 'POST']);
 
+          if ($entity_type_id == 'file') {
+            // Get Entity data from JSON.
+            /** @var \Drupal\file_entity\Entity\FileEntity $entity */
+            $entityData = $this->serializer->decode($contents, 'hal_json', ['request_method' => 'POST']);
+            $originalUri = $entityData['uri'][0]['value'];
+            if ($originalUri != $entity->getFileUri()) {
+              // Extra renamed file has been added, Entity uri changed.
+              // Revert URI and delete extra renamed file.
+              file_unmanaged_delete($entity->getFileUri());
+              $entity->setFileUri($originalUri);
+            }
+          }
           if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
             $message = t("@count. @entity_type_id/id @id",
               [
@@ -191,7 +202,7 @@ class Importer extends DCImporter {
 
             // Check if destination entity is older than existing content.
             // Always skip users, because update user
-            //   caused blocked user without password.
+            // caused blocked user without password.
             if ($entity_type_id != 'user' && $current_entity_changed_time < $entity_changed_time) {
               // Update existing older entity with newer one.
               if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
