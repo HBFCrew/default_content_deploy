@@ -63,7 +63,7 @@ class Importer extends DCImporter {
    *
    * Method is cloned from \Drupal\default_content\Importer::importContent.
    * Injected code is marked in comment. Look for text:
-   * "Here is start of injected code for Entity update."
+   * "Here is start of injected code."
    *
    * @param bool $force_update
    *   TRUE for overwrite entities with matching ID but different UUID.
@@ -154,6 +154,8 @@ class Importer extends DCImporter {
           $entity_type_id = $file->entity_type_id;
           $jsonContents = $this->parseFile($file);
 
+          // Here is start of injected code.
+          //
           /** @var \Drupal\Core\Entity\Entity $entity */
           if ($entity_type_id == 'file') {
             // Get Entity data from JSON.
@@ -187,7 +189,7 @@ class Importer extends DCImporter {
               ]);
             print "\n" . $message . "\t";
           }
-          // Here is start of injected code for Entity update.
+
           // Test if entity (defined by UUID) already exists.
           $entityUuid = $entity->uuid();
           if ($current_entity = $this->loadEntityByUuid($entity_type_id, $entityUuid)) {
