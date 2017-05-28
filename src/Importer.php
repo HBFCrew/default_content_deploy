@@ -83,6 +83,7 @@ class Importer extends DCImporter {
       'created' => 0,
       'updated' => 0,
       'skipped' => 0,
+      'file_created' => 0,
     ];
     $folder = $this->dcdBase->getContentFolder();
 
@@ -159,12 +160,18 @@ class Importer extends DCImporter {
             $originalUri = $this->getFileUriFromJson($jsonContents);
             // Check if file is already exists.
             $fileExists = is_file($originalUri) ? TRUE : FALSE;
+
             /** @var \Drupal\file_entity\Entity\FileEntity $entity */
             $entity = $this->loadEntityFromJson($entity_type_id, $jsonContents);
             if (!$this->writeEnable || $this->writeEnable && $fileExists) {
               // Unwanted file has been created. Delete file and revert URI.
               file_unmanaged_delete($entity->getFileUri());
               $entity->setFileUri($originalUri);
+            }
+            // Check situation that file entity exists, but file
+            // has been deleted. Inform user about action to do.
+            if (!$fileExists) {
+              $result_info['file_created']++;
             }
           }
           else {

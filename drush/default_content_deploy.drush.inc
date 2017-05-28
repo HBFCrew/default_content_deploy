@@ -218,7 +218,11 @@ function drush_default_content_deploy_import() {
   drush_print(dt('- created: @count', ['@count' => $result_info['created']]));
   drush_print(dt('- updated: @count', ['@count' => $result_info['updated']]));
   drush_print(dt('- skipped: @count', ['@count' => $result_info['skipped']]));
-  $entities_todo = $result_info['created'] + $result_info['updated'];
+  drush_print(dt('Missing files to create: @count', ['@count' => $result_info['file_created']]));
+  $entities_todo = $result_info['created'] + $result_info['updated'] + $result_info['file_created'];
+  if ($entities_todo == 0) {
+    drush_print(dt('Nothing to do.'));
+  }
   if ($entities_todo == 0 || !drush_confirm(dt('Do you really want to continue?'))) {
     return drush_user_abort();
   }
@@ -231,6 +235,7 @@ function drush_default_content_deploy_import() {
   drush_print(dt('- created: @count', ['@count' => $result_info['created']]));
   drush_print(dt('- updated: @count', ['@count' => $result_info['updated']]));
   drush_print(dt('- skipped: @count', ['@count' => $result_info['skipped']]));
+  drush_print(dt('Missing files created: @count', ['@count' => $result_info['file_created']]));
 
   drush_log(dt('Imported @count aliases.', ['@count' => $import_status['imported']]), 'success');
   drush_log(dt('Skipped @skipped aliases.', ['@skipped' => $import_status['skipped']]), 'success');
