@@ -107,9 +107,9 @@ class Importer extends DCImporter {
         $this->linkManager->setLinkDomain($this->linkDomain);
         // Parse all of the files and sort them in order of dependency.
         foreach ($files as $file) {
-          $contents = $this->parseFile($file);
+          $jsonContents = $this->parseFile($file);
           // Decode the file contents.
-          $decoded = $this->serializer->decode($contents, 'hal_json');
+          $decoded = $this->serializer->decode($jsonContents, 'hal_json');
           // Get the link to this entity.
           $item_uuid = $decoded['uuid'][0]['value'];
 
@@ -151,24 +151,25 @@ class Importer extends DCImporter {
 
           $file = $file_map[$link];
           $entity_type_id = $file->entity_type_id;
-          $class = $this->entityTypeManager->getDefinition($entity_type_id)
-            ->getClass();
-          $contents = $this->parseFile($file);
-          // Warning! deserialize method will create file from exported JSON.
-          /** @var \Drupal\Core\Entity\Entity $entity */
-          $entity = $this->serializer->deserialize($contents, $class, 'hal_json', ['request_method' => 'POST']);
+          $jsonContents = $this->parseFile($file);
 
+          /** @var \Drupal\Core\Entity\Entity $entity */
           if ($entity_type_id == 'file') {
             // Get Entity data from JSON.
+            $originalUri = $this->getFileUriFromJson($jsonContents);
+            // Check if file is already exists.
+            $fileExists = is_file($originalUri) ? TRUE : FALSE;
             /** @var \Drupal\file_entity\Entity\FileEntity $entity */
-            $entityData = $this->serializer->decode($contents, 'hal_json', ['request_method' => 'POST']);
-            $originalUri = $entityData['uri'][0]['value'];
-            if ($originalUri != $entity->getFileUri()) {
-              // Extra renamed file has been added, Entity uri changed.
-              // Revert URI and delete extra renamed file.
+            $entity = $this->loadEntityFromJson($entity_type_id, $jsonContents);
+            if (!$this->writeEnable || $this->writeEnable && $fileExists) {
+              // Unwanted file has been created. Delete file and revert URI.
               file_unmanaged_delete($entity->getFileUri());
               $entity->setFileUri($originalUri);
             }
+          }
+          else {
+            // All entities except File.
+            $entity = $this->loadEntityFromJson($entity_type_id, $jsonContents);
           }
           if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
             $message = t("@count. @entity_type_id/id @id",
@@ -407,6 +408,39 @@ class Importer extends DCImporter {
       return reset($entities);
     }
     return FALSE;
+  }
+
+  /**
+   * Get file URI from JSON export.
+   *
+   * @param string $contents
+   *   JSON data.
+   *
+   * @return string
+   *   URI.
+   */
+  protected function getFileUriFromJson($contents) {
+    $entityData = $this->serializer->decode($contents, 'hal_json', ['request_method' => 'POST']);
+    $originalUri = $entityData['uri'][0]['value'];
+    return $originalUri;
+  }
+
+  /**
+   * Get Drupal Entity from JSON export.
+   *
+   * @param string $entity_type_id
+   *   EntityType ID.
+   * @param string $jsonContents
+   *   JSON data.
+   *
+   * @return \Drupal\Core\Entity\Entity
+   *   Entity object.
+   */
+  protected function loadEntityFromJson($entity_type_id, $jsonContents) {
+    $class = $this->entityTypeManager->getDefinition($entity_type_id)
+      ->getClass();
+    $entity = $this->serializer->deserialize($jsonContents, $class, 'hal_json', ['request_method' => 'POST']);
+    return $entity;
   }
 
 }
