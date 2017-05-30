@@ -29,6 +29,11 @@ class Importer extends DCImporter {
   protected $writeEnable;
 
   /**
+   * @var bool
+   */
+  protected $fileEntityEnabled;
+
+  /**
    * @var \Drupal\default_content_deploy\DefaultContentDeployBase
    */
   private $dcdBase;
@@ -56,6 +61,8 @@ class Importer extends DCImporter {
   public function __construct(Serializer $serializer, EntityTypeManagerInterface $entity_type_manager, LinkManagerInterface $link_manager, EventDispatcherInterface $event_dispatcher, ScannerInterface $scanner, $link_domain, AccountSwitcherInterface $account_switcher, DefaultContentDeployBase $dcdBase) {
     parent::__construct($serializer, $entity_type_manager, $link_manager, $event_dispatcher, $scanner, $link_domain, $account_switcher);
     $this->dcdBase = $dcdBase;
+    $this->fileEntityEnabled = \Drupal::moduleHandler()
+      ->moduleExists('file_entity');
   }
 
   /**
@@ -158,6 +165,21 @@ class Importer extends DCImporter {
           //
           /** @var \Drupal\Core\Entity\Entity $entity */
           if ($entity_type_id == 'file') {
+            // Skip entity if file_entity module is not enabled.
+            if (!$this->fileEntityEnabled) {
+              if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
+                $message = t("@count. @entity_type_id/id @id",
+                  [
+                    '@count' => $result_info['processed'],
+                    '@entity_type_id' => $entity_type_id,
+                    '@id' => $entity->id(),
+                  ]);
+                $message2 = t("File entity skipped. Enable file_entity module.");
+                print "\n" . $message . ' ' . $message2;
+              }
+              $result_info['skipped']++;
+              continue;
+            }
             // Get Entity data from JSON.
             $originalUri = $this->getFileUriFromJson($jsonContents);
             // Check if file is already exists.
