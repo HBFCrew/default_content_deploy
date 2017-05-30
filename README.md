@@ -289,9 +289,9 @@ install clones of the project. They must:
 
 1. Clone project from the Git repository
 2. Set identical information (identical setting in settings.php)
-  1. Common directory for config management ($config_directories['sync'])
-  2. Common directory for content export/import ($config['content_directory'])
-  3. Common file or value for Drupal salt ($settings['hash_salt'])
+    1. Common directory for config management ($config_directories['sync'])
+    2. Common directory for content export/import ($config['content_directory'])
+    3. Common file or value for Drupal salt ($settings['hash_salt'])
 3. Install Drupal with the same installation profile
 4. Set Site UUID to identical value.
         
