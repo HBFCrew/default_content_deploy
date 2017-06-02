@@ -107,7 +107,7 @@ class DefaultContentDeployBase {
    * @return string
    *   User UUID.
    */
-  protected function getUuidByUid($uid): string {
+  protected function getUuidByUid($uid) {
     /** @var \Drupal\Core\Database\Driver\mysql\Select $query */
     $query = $this->database->select('users')
       ->fields('users', ['uuid'])
