@@ -50,7 +50,7 @@ If you need to sychronize configuration, use drush **config-set** for set Site U
 
 * Install with composer
 
-        composer require HBFCrew/default_content_deploy
+        composer require drupal/default_content_deploy
 
 # Configuration
 
