@@ -70,13 +70,16 @@ If no configuration is found, directory is created automatically at 'public://co
 Module provides many usefull shortcuts for export content and one very important command for deploy content. 
 You can export only one entity, bunch of entities, entities by type or export whole site at once.
 
+If a wrong content entity type is entered, module displays a list of all content entity types 
+available on the site as hint. 
+
 ## drush default-content-deploy-export, drush dcde
 
 Exports a single entity or group of entities with no references.
 
 ### Arguments
 
-* **entity_type** - Entity type (e.g. node, user, taxonomy/term…)
+* **entity_type** - Entity type (e.g. node, user, taxonomy/term, custom_entity_type...)
 
 ### Options
 * **entity_id** - ID of entity for export.
@@ -99,8 +102,12 @@ Exports a single entity or group of entities with no references.
     
 ## drush default-content-deploy-export-with-references, drush dcder
 
-Exports a single entity or group of entities with all references. 
-The options are identical in drush dcde.
+Exports a single entity or group of entities with all references.
+
+If a wrong content entity type is entered, module displays a list of all content entity types 
+available on the site as hint. 
+
+The options are identical in drush dcde. 
 
 ### Arguments
 
@@ -289,9 +296,9 @@ install clones of the project. They must:
 
 1. Clone project from the Git repository
 2. Set identical information (identical setting in settings.php)
-    1. Common directory for config management ($config_directories['sync'])
-    2. Common directory for content export/import ($config['content_directory'])
-    3. Common file or value for Drupal salt ($settings['hash_salt'])
+  1. Common directory for config management ($config_directories['sync'])
+  2. Common directory for content export/import ($config['content_directory'])
+  3. Common file or value for Drupal salt ($settings['hash_salt'])
 3. Install Drupal with the same installation profile
 4. Set Site UUID to identical value.
         

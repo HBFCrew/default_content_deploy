@@ -3,6 +3,7 @@
 namespace Drupal\default_content_deploy;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\Entity\ContentEntityType;
 
 /**
  * A service for handling export of default content.
@@ -25,7 +26,10 @@ class Exporter extends DefaultContentDeployBase {
    *   Number of exported entities.
    */
   public function export($entityType, $entityBundle = '', $entityIds = '', $skipEntities = '') {
-    if (!$this->validateEntityType($entityType)) {
+    $contentEntityTypes = $this->getContentEntityTypes();
+    if (!$this->validateEntityType($entityType, $contentEntityTypes)) {
+      drush_print(t('List of available content entity types:'));
+      drush_print_r(array_keys($contentEntityTypes));
       throw new \InvalidArgumentException(sprintf('Entity type "%s" does not exist', $entityType));
     }
 
@@ -89,7 +93,7 @@ class Exporter extends DefaultContentDeployBase {
     $addEntityType = explode(parent::DELIMITER, $addEntityType);
     $skipEntityType = explode(parent::DELIMITER, $skipEntityType);
 
-    $defualtEntityTypes = [
+    $defaultEntityTypes = [
       'block_content',
       'comment',
       'file',
@@ -101,11 +105,11 @@ class Exporter extends DefaultContentDeployBase {
       'paragraph',
     ];
 
-    $defualtEntityTypes += array_unique(array_merge($defualtEntityTypes, $addEntityType));
-    $available_entity_types = array_keys($this->entityTypeManager->getDefinitions());
+    $defaultEntityTypes += array_unique(array_merge($defaultEntityTypes, $addEntityType));
+    $contentEntityTypes = $this->getContentEntityTypes();
 
-    foreach ($defualtEntityTypes as $entityType) {
-      if (!in_array($entityType, $skipEntityType) && in_array($entityType, $available_entity_types)) {
+    foreach ($defaultEntityTypes as $entityType) {
+      if (!in_array($entityType, $skipEntityType) && in_array($entityType, $contentEntityTypes)) {
         $exportedEntities = $this->export($entityType);
         $count[$entityType] = $exportedEntities;
       }
@@ -118,7 +122,8 @@ class Exporter extends DefaultContentDeployBase {
    * Export url aliases in single json file under alias folder.
    */
   public function exportUrlAliases() {
-    $query = $this->database->select('url_alias', 'aliases')->fields('aliases', []);
+    $query = $this->database->select('url_alias', 'aliases')
+      ->fields('aliases', []);
     $data = $query->execute();
     $results = $data->fetchAll(\PDO::FETCH_OBJ);
     $aliases = [];
@@ -153,7 +158,10 @@ class Exporter extends DefaultContentDeployBase {
    */
   protected function getEntityIdsForExport($entityType, $entityBundle, $entityIds, $skipEntities) {
     $exportedEntityIds = [];
-    if (!$this->validateEntityType($entityType)) {
+    $contentEntityTypes = $this->getContentEntityTypes();
+    if (!$this->validateEntityType($entityType, $contentEntityTypes)) {
+      drush_print(t('List of available content entity types:'));
+      drush_print_r(array_keys($contentEntityTypes));
       throw new \InvalidArgumentException(sprintf('Entity type "%s" does not exist', $entityType));
     }
 
@@ -194,13 +202,37 @@ class Exporter extends DefaultContentDeployBase {
     return $exportedEntityIds;
   }
 
-  protected function validateEntityType($entityType) {
-    $validEntityTypes = $this->entityTypeManager->getDefinitions();
-    if (array_key_exists($entityType, $validEntityTypes)) {
+  /**
+   * @param string $entityType
+   *   Validated entity type.
+   * @param array $contentEntityTypes
+   *   Array of entity definitions keyed by type.
+   *
+   * @return bool
+   */
+  protected function validateEntityType($entityType, $contentEntityTypes) {
+    if (array_key_exists($entityType, $contentEntityTypes)) {
       return TRUE;
     }
-
     return FALSE;
+  }
+
+  /**
+   * Get Content Entity Types
+   *
+   * @return array
+   *   Array of available content entity definitions keyed by type ID.
+   */
+  protected function getContentEntityTypes() {
+    $contentEntityTypes = [];
+    $entityTypes = $this->entityTypeManager->getDefinitions();
+    /* @var $definition \Drupal\Core\Entity\EntityTypeInterface */
+    foreach ($entityTypes as $type => $definition) {
+      if ($definition instanceof ContentEntityType) {
+        $contentEntityTypes[$type] = $definition;
+      }
+    }
+    return $contentEntityTypes;
   }
 
 }
