@@ -109,7 +109,7 @@ class Exporter extends DefaultContentDeployBase {
     $contentEntityTypes = $this->getContentEntityTypes();
 
     foreach ($defaultEntityTypes as $entityType) {
-      if (!in_array($entityType, $skipEntityType) && in_array($entityType, $contentEntityTypes)) {
+      if (!in_array($entityType, $skipEntityType) && in_array($entityType, array_keys($contentEntityTypes))) {
         $exportedEntities = $this->export($entityType);
         $count[$entityType] = $exportedEntities;
       }
