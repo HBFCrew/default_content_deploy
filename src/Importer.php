@@ -162,19 +162,15 @@ class Importer extends DCImporter {
           $jsonContents = $this->parseFile($file);
 
           // Here is start of injected code.
-          //
-          /** @var \Drupal\Core\Entity\Entity $entity */
+          // ------------------------------
           if ($entity_type_id == 'file') {
             // Skip entity if file_entity module is not enabled.
             if (!$this->fileEntityEnabled) {
               if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
-                $message = t("@count. @entity_type_id/id @id",
-                  [
-                    '@count' => $result_info['processed'],
-                    '@entity_type_id' => $entity_type_id,
-                    '@id' => $entity->id(),
-                  ]);
-                $message2 = t("File entity skipped. Enable file_entity module.");
+                $message = t("@count.", [
+                  '@count' => $result_info['processed'],
+                ]);
+                $message2 = t("File entity skipped. If you need to import files, enable the file_entity module.");
                 print "\n" . $message . ' ' . $message2;
               }
               $result_info['skipped']++;
@@ -200,6 +196,7 @@ class Importer extends DCImporter {
           }
           else {
             // All entities except File.
+            /** @var \Drupal\Core\Entity\Entity $entity */
             $entity = $this->loadEntityFromJson($entity_type_id, $jsonContents);
           }
           if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
