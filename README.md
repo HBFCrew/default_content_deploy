@@ -44,13 +44,13 @@ If you need to sychronize configuration, use drush **config-set** for set Site U
 
 # Install
 
-* Add repository to composer.json
-
-        https://github.com/HBFCrew/default_content_deploy
-
-* Install with composer
+* with composer
 
         composer require drupal/default_content_deploy
+        
+* with drush
+        
+        drush en default_content_deploy 
 
 # Configuration
 

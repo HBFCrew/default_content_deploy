@@ -3,13 +3,13 @@
 namespace Drupal\default_content_deploy;
 
 use Drupal\Core\Database\Connection;
-use Drupal\Core\Entity\EntityTypeManager;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\default_content\Exporter;
 use Symfony\Component\Serializer\Serializer;
 
 /**
- * A service for handling import of default content.
+ * A service for handling import and export of default content.
  */
 class DefaultContentDeployBase {
 
@@ -38,12 +38,12 @@ class DefaultContentDeployBase {
    *   Exporter.
    * @param \Drupal\Core\Site\Settings $settings
    *   Settings.
-   * @param \Drupal\Core\Entity\EntityTypeManager $entityTypeManager
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   Entity Type Manager.
    * @param \Symfony\Component\Serializer\Serializer $serializer
    *   Serializer.
    */
-  public function __construct(Connection $database, Exporter $exporter, Settings $settings, EntityTypeManager $entityTypeManager, Serializer $serializer) {
+  public function __construct(Connection $database, Exporter $exporter, Settings $settings, EntityTypeManagerInterface $entityTypeManager, Serializer $serializer) {
     $this->database = $database;
     $this->exporter = $exporter;
     $this->settings = $settings;

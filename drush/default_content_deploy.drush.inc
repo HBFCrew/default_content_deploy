@@ -16,9 +16,9 @@ function default_content_deploy_drush_command() {
 
   $items['default-content-deploy-export'] = [
     'aliases' => ['dcde'],
-    'description' => dt('Exports a single entity or group of entities to default content deploy module'),
+    'description' => dt('Exports a single entity or group of entities.'),
     'arguments' => [
-      'entity_type' => dt('The entity type to export.'),
+      'entity_type' => dt('The entity type to export. If a wrong content entity type is entered, module displays a list of all content entity types.'),
     ],
     'options' => [
       'entity_id' => dt('The ID of the entity to export.'),
@@ -37,9 +37,9 @@ function default_content_deploy_drush_command() {
 
   $items['default-content-deploy-export-with-references'] = [
     'aliases' => ['dcder'],
-    'description' => dt('Exports a single entity with referencesto default content deploy module'),
+    'description' => dt('Exports a single entity with references.'),
     'arguments' => [
-      'entity_type' => dt('The entity type to export.'),
+      'entity_type' => dt('The entity type to export. If a wrong content entity type is entered, module displays a list of all content entity types.'),
     ],
     'options' => [
       'entity_id' => dt('The ID of the entity to export.'),
@@ -58,7 +58,7 @@ function default_content_deploy_drush_command() {
 
   $items['default-content-deploy-export-site'] = [
     'aliases' => ['dcdes'],
-    'description' => dt('Exports a site to default content deploy module'),
+    'description' => dt('Exports a site.'),
     'options' => [
       'add_entity_type' => dt('The entity types to add.'),
       'skip_entity_type' => dt('The entity types to skip.'),
