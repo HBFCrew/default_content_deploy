@@ -142,7 +142,7 @@ class Exporter extends DefaultContentDeployBase {
   }
 
   /**
-   * Get entity ids.
+   * Get all entity IDs for export.
    *
    * @param string $entityType
    *   Entity Type.
@@ -154,7 +154,7 @@ class Exporter extends DefaultContentDeployBase {
    *   Entities to skip.
    *
    * @return array
-   *   Return array of entitiy ids.
+   *   Return array of entity ids.
    */
   protected function getEntityIdsForExport($entityType, $entityBundle, $entityIds, $skipEntities) {
     $exportedEntityIds = [];
@@ -165,7 +165,13 @@ class Exporter extends DefaultContentDeployBase {
       throw new \InvalidArgumentException(sprintf('Entity type "%s" does not exist', $entityType));
     }
 
-    // Export by bundle.
+    // At first, export entities by entity id from --entity_id parameter.
+    if (!empty($entityIds)) {
+      $entityIds = explode(parent::DELIMITER, $entityIds);
+      $exportedEntityIds += $entityIds;
+    }
+
+    // Add all entities by given bundle.
     if (!empty($entityBundle)) {
       $query = \Drupal::entityQuery($entityType);
       $bundles = explode(parent::DELIMITER, $entityBundle);
@@ -181,12 +187,7 @@ class Exporter extends DefaultContentDeployBase {
       $exportedEntityIds += $entityIds;
     }
 
-    // Export by entity id.
-    if (!empty($entityIds)) {
-      $entityIds = explode(parent::DELIMITER, $entityIds);
-      $exportedEntityIds += $entityIds;
-    }
-
+    // If still no entities to export, export all entities of given type.
     if (empty($exportedEntityIds)) {
       $query = \Drupal::entityQuery($entityType);
       $entityIds = $query->execute();
@@ -209,8 +210,9 @@ class Exporter extends DefaultContentDeployBase {
    *   Array of entity definitions keyed by type.
    *
    * @return bool
+   *   TRUE if entity type is valid.
    */
-  protected function validateEntityType($entityType, $contentEntityTypes) {
+  protected function validateEntityType(string $entityType, array $contentEntityTypes) {
     if (array_key_exists($entityType, $contentEntityTypes)) {
       return TRUE;
     }
