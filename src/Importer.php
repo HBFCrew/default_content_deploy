@@ -61,8 +61,10 @@ class Importer extends DCImporter {
   public function __construct(Serializer $serializer, EntityTypeManagerInterface $entity_type_manager, LinkManagerInterface $link_manager, EventDispatcherInterface $event_dispatcher, ScannerInterface $scanner, $link_domain, AccountSwitcherInterface $account_switcher, DefaultContentDeployBase $dcdBase) {
     parent::__construct($serializer, $entity_type_manager, $link_manager, $event_dispatcher, $scanner, $link_domain, $account_switcher);
     $this->dcdBase = $dcdBase;
-    $this->fileEntityEnabled = \Drupal::moduleHandler()
-      ->moduleExists('file_entity');
+    $this->fileEntityEnabled = (
+      \Drupal::moduleHandler()->moduleExists('file_entity') ||
+      \Drupal::moduleHandler()->moduleExists('better_normalizers')
+    );
   }
 
   /**
