@@ -212,7 +212,7 @@ class Exporter extends DefaultContentDeployBase {
    * @return bool
    *   TRUE if entity type is valid.
    */
-  protected function validateEntityType(string $entityType, array $contentEntityTypes) {
+  protected function validateEntityType($entityType, array $contentEntityTypes) {
     if (array_key_exists($entityType, $contentEntityTypes)) {
       return TRUE;
     }
