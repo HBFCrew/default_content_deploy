@@ -16,6 +16,6 @@
   ],
   "require": {
     "drupal/core": "~8.3",
-    "drupal/default_content": "dev-8.x-1.x"
+    "drupal/default_content": "^1.0"
   }
 }
