@@ -97,6 +97,7 @@ class Importer extends DCImporter {
     $folder = $this->dcdBase->getContentFolder();
 
     if (file_exists($folder)) {
+      /** @var \Drupal\user\Entity\User $root_user */
       $root_user = $this->entityTypeManager->getStorage('user')->load(1);
       $this->accountSwitcher->switchTo($root_user);
       $file_map = [];
@@ -165,15 +166,21 @@ class Importer extends DCImporter {
 
           // Here is start of injected code.
           // ------------------------------
+          // In case of error, is useful to know which file causes the problem.
+          if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
+            $message = t("@count. Loading file: @fileuri, entity type: @entity_type_id \t", [
+              '@count' => $result_info['processed'],
+              '@entity_type_id' => $entity_type_id,
+              '@fileuri' => $file->uri,
+            ]);
+            print "\n" . $message . "\n";
+          }
           if ($entity_type_id == 'file') {
             // Skip entity if file_entity module is not enabled.
             if (!$this->fileEntityEnabled) {
               if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
-                $message = t("@count.", [
-                  '@count' => $result_info['processed'],
-                ]);
-                $message2 = t("File entity skipped. If you need to import files, enable the file_entity module.");
-                print "\n" . $message . ' ' . $message2;
+                $message = t("File entity skipped. If you need to import files, enable the file_entity or better_normalizers module.");
+                print $message;
               }
               $result_info['skipped']++;
               continue;
@@ -202,13 +209,12 @@ class Importer extends DCImporter {
             $entity = $this->loadEntityFromJson($entity_type_id, $jsonContents);
           }
           if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
-            $message = t("@count. @entity_type_id/id @id",
+            $message = t("@entity_type_id/id @id",
               [
-                '@count' => $result_info['processed'],
                 '@entity_type_id' => $entity_type_id,
                 '@id' => $entity->id(),
               ]);
-            print "\n" . $message . "\t";
+            print "\t" . $message . "\t\t";
           }
 
           // Test if entity (defined by UUID) already exists.
@@ -330,7 +336,7 @@ class Importer extends DCImporter {
             ];
             \Drupal::logger('default_content_deploy')
               ->info(
-                'Entity (type: @type/@bundle, ID: @id) @method successfully from @file',
+                'Entity @type/@bundle, ID: @id @method successfully',
                 $saved_entity_log_info
               );
           }
