@@ -85,7 +85,7 @@ class Exporter extends DefaultContentDeployBase {
    *   Add entity types what are you want to skip.
    *
    * @return array
-   *   Return number of exported entites grouped by entity type.
+   *   Return number of exported entities grouped by entity type.
    */
   public function exportSite($addEntityType = '', $skipEntityType = '') {
     $count = [];
@@ -204,6 +204,8 @@ class Exporter extends DefaultContentDeployBase {
   }
 
   /**
+   * Validate the entity type
+   *
    * @param string $entityType
    *   Validated entity type.
    * @param array $contentEntityTypes
