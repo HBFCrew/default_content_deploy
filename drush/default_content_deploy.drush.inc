@@ -222,6 +222,7 @@ function drush_default_content_deploy_import() {
   $entities_todo = $result_info['created'] + $result_info['updated'] + $result_info['file_created'];
   if ($entities_todo == 0) {
     drush_print(dt('Nothing to do.'));
+    return FALSE;
   }
   if ($entities_todo == 0 || !drush_confirm(dt('Do you really want to continue?'))) {
     return drush_user_abort();
