@@ -162,4 +162,35 @@ class DefaultContentDeployBase {
       ->execute();
   }
 
+  /**
+   * Deletes all files and directories in the specified filepath recursively.
+   *
+   * @param $path
+   * @param bool $deleteDir
+   *   TRUE if you need to delete also directory in $path.
+   *   FALSE if you need to delete only content of dir and its subdirs.
+   *
+   * @return bool
+   *   FALSE if errors.
+   */
+  protected function deleteDirectoryContentRecursively($path, $deleteDir = FALSE) {
+    if (is_dir($path)) {
+      $dir = dir($path);
+      while (($entry = $dir->read()) !== FALSE) {
+        if ($entry == '.' || $entry == '..') {
+          continue;
+        }
+        $entry_path = $path . '/' . $entry;
+        $this->deleteDirectoryContentRecursively($entry_path, TRUE);
+      }
+      $dir->close();
+
+      if ($deleteDir) {
+        \Drupal::service('file_system')->rmdir($path);
+      }
+      return TRUE;
+    }
+    return file_unmanaged_delete($path);
+  }
+
 }

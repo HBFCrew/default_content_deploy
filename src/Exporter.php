@@ -107,6 +107,9 @@ class Exporter extends DefaultContentDeployBase {
     $defaultEntityTypes += array_unique(array_merge($defaultEntityTypes, $addEntityType));
     $contentEntityTypes = $this->getContentEntityTypes();
 
+    // Delete files in the content directory before export.
+    $this->deleteDirectoryContentRecursively($this->getContentFolder(), FALSE );
+
     foreach ($defaultEntityTypes as $entityType) {
       if (!in_array($entityType, $skipEntityType) && in_array($entityType, array_keys($contentEntityTypes))) {
         $exportedEntities = $this->export($entityType);
