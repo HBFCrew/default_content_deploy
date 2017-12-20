@@ -1,0 +1,5 @@
+services:
+  default_content_deploy.commands:
+    class: \Drupal\default_content_deploy\Commands\DefaultContentDeployCommands
+    tags:
+      - { name: drush.command }
