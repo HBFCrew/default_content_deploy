@@ -57,15 +57,15 @@ class DefaultContentDeployBase {
    * Folder is automatically created on install inside files folder.
    * Or you can override content folder in settings.php file.
    *
-   * @example $config_directories['content'] = '../content';
+   * @example $config_directories['content_directory'] = '../content';
    *
    * @return string
    *   Return path to the content folder.
    */
   public function getContentFolder() {
-    global $config;
-    if (isset($config) && isset($config['content_directory'])) {
-      return $config['content_directory'];
+    $contentDir = config_get_config_directory('content_directory');
+    if (isset($contentDir)) {
+      return $contentDir;
     }
     else {
       $hash_salt = $this->settings->getHashSalt();
