@@ -1,7 +1,7 @@
 {
   "name": "drupal/default_content_deploy",
   "description": "Drupal 8 module for deploying content in *.json files. Sponsored by: HBF s.r.o., http://hbf.sk, https://drupal.org/hbf",
-  "type": "drupal-drush",
+  "type": "drupal-module",
   "authors": [
     {
       "name": "Martin Klíma",
