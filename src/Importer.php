@@ -58,7 +58,14 @@ class Importer extends DCImporter {
    * @param \Drupal\default_content_deploy\DefaultContentDeployBase $dcdBase
    *   DefaultContentDeployBase.
    */
-  public function __construct(Serializer $serializer, EntityTypeManagerInterface $entity_type_manager, LinkManagerInterface $link_manager, EventDispatcherInterface $event_dispatcher, ScannerInterface $scanner, $link_domain, AccountSwitcherInterface $account_switcher, DefaultContentDeployBase $dcdBase) {
+  public function __construct(Serializer $serializer,
+                              EntityTypeManagerInterface $entity_type_manager,
+                              LinkManagerInterface $link_manager,
+                              EventDispatcherInterface $event_dispatcher,
+                              ScannerInterface $scanner,
+                              $link_domain,
+                              AccountSwitcherInterface $account_switcher,
+                              DefaultContentDeployBase $dcdBase) {
     parent::__construct($serializer, $entity_type_manager, $link_manager, $event_dispatcher, $scanner, $link_domain, $account_switcher);
     $this->dcdBase = $dcdBase;
     $this->fileEntityEnabled = (
@@ -377,10 +384,10 @@ class Importer extends DCImporter {
 
       foreach ($path_aliases as $url => $alias) {
         if (!$path_alias_storage->aliasExists($alias['alias'], $alias['langcode'])) {
-          if ($this->writeEnable) {
+          if ($this->writeEnable !== FALSE) {
             $path_alias_storage->save($alias['source'], $alias['alias'], $alias['langcode']);
+            $count++;
           }
-          $count++;
         }
         else {
           $skipped++;
