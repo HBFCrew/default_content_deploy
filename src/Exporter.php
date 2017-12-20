@@ -4,6 +4,7 @@ namespace Drupal\default_content_deploy;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Entity\ContentEntityType;
+use Drush\Drush;
 
 /**
  * A service for handling export of default content.
@@ -25,14 +26,10 @@ class Exporter extends DefaultContentDeployBase {
    * @return int
    *   Number of exported entities.
    */
-  public function export($entityType, $entityBundle = '', $entityIds = '', $skipEntities = '') {
-    $contentEntityTypes = $this->getContentEntityTypes();
-    if (!$this->validateEntityType($entityType, $contentEntityTypes)) {
-      drush_print(t('List of available content entity types:'));
-      drush_print_r(array_keys($contentEntityTypes));
-      throw new \InvalidArgumentException(sprintf('Entity type "%s" does not exist', $entityType));
-    }
-
+  public function export($entityType,
+                         $entityBundle = '',
+                         $entityIds = '',
+                         $skipEntities = '') {
     $exportedEntities = [];
     // Get entities for export.
     $exportedEntityIds = $this->getEntityIdsForExport($entityType, $entityBundle, $entityIds, $skipEntities);
@@ -50,7 +47,7 @@ class Exporter extends DefaultContentDeployBase {
   }
 
   /**
-   * Export entites by entity type, id or bundle with references.
+   * Export entities by entity type, id or bundle with references.
    *
    * @param string $entityType
    *   Entity Type.
@@ -64,10 +61,12 @@ class Exporter extends DefaultContentDeployBase {
    * @return int
    *   Number of exported entities.
    */
-  public function exportWithReferences($entityType, $entityBundle = '', $entityIds = '', $skipEntities = '') {
+  public function exportWithReferences($entityType,
+                                       $entityBundle = '',
+                                       $entityIds = '',
+                                       $skipEntities = '') {
     // Get entities for export.
     $exportedEntityIds = $this->getEntityIdsForExport($entityType, $entityBundle, $entityIds, $skipEntities);
-    // Serialize entities and get uuids for entities.
     foreach ($exportedEntityIds as $entityId) {
       $exportedEntityByType = $this->exporter->exportContentWithReferences($entityType, $entityId);
       $this->exporter->writeDefaultContent($exportedEntityByType, $this->getContentFolder());
@@ -156,12 +155,16 @@ class Exporter extends DefaultContentDeployBase {
    * @return array
    *   Return array of entity ids.
    */
-  protected function getEntityIdsForExport($entityType, $entityBundle, $entityIds, $skipEntities) {
+  protected function getEntityIdsForExport($entityType,
+                                           $entityBundle,
+                                           $entityIds,
+                                           $skipEntities) {
     $exportedEntityIds = [];
     $contentEntityTypes = $this->getContentEntityTypes();
     if (!$this->validateEntityType($entityType, $contentEntityTypes)) {
-      drush_print(t('List of available content entity types:'));
-      drush_print_r(array_keys($contentEntityTypes));
+      // @todo Is any better method how to call writeln()?
+      Drush::output()->writeln(dt('List of available content entity types:'));
+      Drush::output()->writeln(implode(', ', array_keys($contentEntityTypes)));
       throw new \InvalidArgumentException(sprintf('Entity type "%s" does not exist', $entityType));
     }
 
@@ -214,7 +217,8 @@ class Exporter extends DefaultContentDeployBase {
    * @return bool
    *   TRUE if entity type is valid.
    */
-  protected function validateEntityType($entityType, array $contentEntityTypes) {
+  protected function validateEntityType($entityType,
+                                        array $contentEntityTypes) {
     if (array_key_exists($entityType, $contentEntityTypes)) {
       return TRUE;
     }
