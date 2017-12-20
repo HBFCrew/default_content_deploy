@@ -145,6 +145,9 @@ class DefaultContentDeployCommands extends DrushCommands {
         '@entity' => $entity,
       ]));
     }
+
+    // Also export path alaiases.
+    $this->contentDeployExportAliases();
   }
 
   /**
