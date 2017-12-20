@@ -26,10 +26,10 @@ for export/import content. Import function can also be ran from administration i
 ## Modules
 - Default Content for Drupal 8 (**default_content**) - 
 https://www.drupal.org/project/default_content
-- optionally **File entity (file_entity)** 
-(only if you need to deploy files, f.e. images, attachments) 
-https://www.drupal.org/project/file_entity, https://github.com/drupal-media/file_entity
-  - You need the patch from https://www.drupal.org/node/2877678 due to unfixed dependency since Drupal core 8.3.0.
+- optionally **File entity** (file_entity) or **Better Normalizers** (better_normalizers) - if 
+  you need to deploy files, f.e. images, attachments. 
+https://www.drupal.org/project/file_entity, https://github.com/drupal-media/file_entity,
+https://www.drupal.org/project/better_normalizers
 
 ## Sites config synchronization (optional)
 
@@ -73,7 +73,7 @@ You can export only one entity, bunch of entities, entities by type or export wh
 If a wrong content entity type is entered, module displays a list of all content entity types 
 available on the site as hint. 
 
-## drush default-content-deploy-export, drush dcde
+## drush default-content-deploy:export, drush dcde
 
 Exports a single entity or group of entities with no references.
 
@@ -100,7 +100,7 @@ Exports a single entity or group of entities with no references.
     drush dcde node --skip_entities=5,7
     Export all nodes and skip nodes with entity id 5 and 7.
     
-## drush default-content-deploy-export-with-references, drush dcder
+## drush default-content-deploy:export-with-references, drush dcder
 
 Exports a single entity or group of entities with all references.
 
@@ -137,9 +137,9 @@ The options are identical in drush dcde.
     Export all nodes and skip nodes with references with entity id 5 and 7.
 
 
-## drush default-content-deploy-export-site, drush dcdes
+## drush default-content-deploy:export-site, drush dcdes
 
-Exports a whole site content. You can include/exclude entities by their type.
+Exports a whole site content + path aliases. You can include/exclude entities by their type.
 
 Entity types exported by default:
 
@@ -170,7 +170,7 @@ Entity types exported by default:
     Export complete website but skip nodes and users.
 
 
-## drush default-content-deploy-export-aliases, drush dcdea
+## drush default-content-deploy:export-aliases, drush dcdea
 
 Exports URL aliases.
 
@@ -180,7 +180,7 @@ Exports URL aliases.
     Export url aliases.
 
 
-## drush default-content-deploy-import-aliases, drush dcdia
+## drush default-content-deploy:import-aliases, drush dcdia
 
 Import URL aliases.
 
@@ -190,7 +190,7 @@ Import URL aliases.
     Import url aliases.
 
 
-## drush default-content-deploy-import, drush dcdi
+## drush default-content-deploy:import, drush dcdi
 
 Deploy (import/create/update/replace) content from all exported files. 
 
@@ -239,7 +239,7 @@ If you can not use Drush, go to page /admin/config/development/dcd-import.
 Check "Import content" permission. 
 
 
-## drush dcd-uuid-info
+## drush default-content-deploy:uuid-info, drush dcd-uuid-info
 
 Display current values of System Site, Admin and Anonymous UUIDs, Admin name.
 
