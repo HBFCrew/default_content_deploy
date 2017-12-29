@@ -34,14 +34,14 @@ class ImportForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form['force-update'] = [
       '#type' => 'checkbox',
-      '#title' => t('Force update'),
+      '#title' => $this->t('Force update'),
       '#description' => $this->t('Import content but existing content with different UUID will be replaced (recommended for better content synchronization).'),
       '#default_value' => TRUE,
     ];
 
     $form['import'] = [
       '#type' => 'submit',
-      '#value' => t('Import content'),
+      '#value' => $this->t('Import content'),
     ];
 
     return $form;
@@ -58,13 +58,13 @@ class ImportForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $forceUpdate = $form_state->getValue('force-update', FALSE);
     $result_info = \Drupal::service('default_content_deploy.importer')->deployContent($forceUpdate, TRUE);
-    $message = t('@count entities have been imported.', ['@count' => $result_info['processed']]);
+    $message = $this->t('@count entities have been imported.', ['@count' => $result_info['processed']]);
     $message .= " ";
-    $message .= t('created: @count', ['@count' => $result_info['created']]);
+    $message .= $this->t('created: @count', ['@count' => $result_info['created']]);
     $message .= ', ';
-    $message .= t('updated: @count', ['@count' => $result_info['updated']]);
+    $message .= $this->t('updated: @count', ['@count' => $result_info['updated']]);
     $message .= ', ';
-    $message .= t('skipped: @count', ['@count' => $result_info['skipped']]);
+    $message .= $this->t('skipped: @count', ['@count' => $result_info['skipped']]);
     drupal_set_message($message);
   }
 

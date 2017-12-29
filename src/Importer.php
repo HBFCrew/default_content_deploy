@@ -24,16 +24,22 @@ use Symfony\Component\Serializer\Serializer;
 class Importer extends DCImporter {
 
   /**
+   * Flag for enable/disable writing operations.
+   *
    * @var bool
    */
   protected $writeEnable;
 
   /**
+   * Flag if some known file normalizer is installed.
+   *
    * @var bool
    */
   protected $fileEntityEnabled;
 
   /**
+   * DefaultContentDeployBase.
+   *
    * @var \Drupal\default_content_deploy\DefaultContentDeployBase
    */
   private $dcdBase;
@@ -382,7 +388,7 @@ class Importer extends DCImporter {
       $aliases = file_get_contents($file, TRUE);
       $path_aliases = Json::decode($aliases);
 
-      foreach ($path_aliases as $url => $alias) {
+      foreach ($path_aliases as $alias) {
         if (!$path_alias_storage->aliasExists($alias['alias'], $alias['langcode'])) {
           if ($this->writeEnable !== FALSE) {
             $path_alias_storage->save($alias['source'], $alias['alias'], $alias['langcode']);
@@ -399,7 +405,7 @@ class Importer extends DCImporter {
   }
 
   /**
-   * Get entity info
+   * Get entity info.
    *
    * @param \Drupal\Core\Entity\Entity $entity
    *   Entity object.

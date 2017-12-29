@@ -5,27 +5,23 @@ namespace Drupal\default_content_deploy\Commands;
 use Drush\Commands\DrushCommands;
 
 /**
+ * Class DefaultContentDeployCommands.
  *
- * In addition to a commandfile like this one, you need a drush.services.yml
- * in root of your module, and a composer.json file that provides the name
- * of the services file to use.
- *
- * See these files for an example of injecting Drupal services:
- *   - http://cgit.drupalcode.org/devel/tree/src/Commands/DevelCommands.php
- *   - http://cgit.drupalcode.org/devel/tree/drush.services.yml
+ * @package Drupal\default_content_deploy\Commands
  */
 class DefaultContentDeployCommands extends DrushCommands {
 
   /**
    * Exports a single entity or group of entities.
    *
-   * @command default-content-deploy:export
-   *
-   * @param string $EntityType The entity type to export. If a wrong content
-   *   entity type is entered, module displays a list of all content entity
-   *   types.
-   * @param array $options An associative array of options whose values come
+   * @param string $entityType
+   *   The entity type to export. If a wrong content entity type is entered,
+   *   module displays a list of all content entity types.
+   * @param array $options
+   *   An associative array of options whose values come
    *   from cli, aliases, config, etc.
+   *
+   * @command default-content-deploy:export
    *
    * @option entity_id The ID of the entity to export.
    * @option bundle Write out the exported bundle of entity
@@ -45,7 +41,7 @@ class DefaultContentDeployCommands extends DrushCommands {
    * @validate-module-enabled default_content
    * @aliases dcde,default-content-deploy-export
    */
-  public function contentDeployExport($EntityType,
+  public function contentDeployExport($entityType,
                                       array $options = [
                                         'entity_id' => NULL,
                                         'bundle' => NULL,
@@ -57,7 +53,7 @@ class DefaultContentDeployCommands extends DrushCommands {
 
     /** @var \Drupal\default_content_deploy\Exporter $exporter */
     $exporter = \Drupal::service('default_content_deploy.exporter');
-    $count = $exporter->export($EntityType, $entity_bundles, $entity_ids, $skip_entities);
+    $count = $exporter->export($entityType, $entity_bundles, $entity_ids, $skip_entities);
 
     $this->logger->notice(dt('Exported @count entities.', ['@count' => $count]));
   }
@@ -65,14 +61,14 @@ class DefaultContentDeployCommands extends DrushCommands {
   /**
    * Exports a single entity with references.
    *
-   * @command default-content-deploy:export-with-references
-   *
-   * @param string $EntityType
+   * @param string $entityType
    *   The entity type to export. If a wrong content entity
    *   type is entered, module displays a list of all content entity types.
    * @param array $options
    *   An associative array of options whose values come
    *   from cli, aliases, config, etc.
+   *
+   * @command default-content-deploy:export-with-references
    *
    * @option entity_id The ID of the entity to export.
    * @option bundle Write out the exported bundle of entity
@@ -92,7 +88,7 @@ class DefaultContentDeployCommands extends DrushCommands {
    * @validate-module-enabled default_content
    * @aliases dcder,default-content-deploy-export-with-references
    */
-  public function contentDeployExportWithReferences($EntityType,
+  public function contentDeployExportWithReferences($entityType,
                                                     array $options = [
                                                       'entity_id' => NULL,
                                                       'bundle' => NULL,
@@ -104,17 +100,18 @@ class DefaultContentDeployCommands extends DrushCommands {
 
     /** @var \Drupal\default_content_deploy\Exporter $exporter */
     $exporter = \Drupal::service('default_content_deploy.exporter');
-    $count = $exporter->exportWithReferences($EntityType, $entity_bundles, $entity_ids, $skip_entities);
+    $count = $exporter->exportWithReferences($entityType, $entity_bundles, $entity_ids, $skip_entities);
     $this->logger->notice(dt('Exported @count entities with references.', ['@count' => $count]));
   }
 
   /**
    * Exports a whole site content.
    *
-   * @command default-content-deploy:export-site
-   *
-   * @param array $options An associative array of options whose values come
+   * @param array $options
+   *   An associative array of options whose values come
    *   from cli, aliases, config, etc.
+   *
+   * @command default-content-deploy:export-site
    *
    * @option add_entity_type The entity types to add.
    * @option skip_entity_type The entity types to skip.
@@ -171,12 +168,14 @@ class DefaultContentDeployCommands extends DrushCommands {
   /**
    * Import all the content defined in a module.
    *
-   * @command default-content-deploy:import
-   *
-   * @param array $options An associative array of options whose values come
+   * @param array $options
+   *   An associative array of options whose values come
    *   from cli, aliases, config, etc.
    *
-   * @option force-update Content with different UUID but same ID will be
+   * @command default-content-deploy:import
+   *
+   * @option force-update
+   *   Content with different UUID but same ID will be
    *   updated (UUID will be replaced).
    * @usage drush dcdi
    *   Import content. Existing older content with matching UUID will be
@@ -191,8 +190,6 @@ class DefaultContentDeployCommands extends DrushCommands {
    * @aliases dcdi,default-content-deploy-import
    */
   public function contentDeployImport(array $options = ['force-update' => NULL]) {
-    // See bottom of https://weitzman.github.io/blog/port-to-drush9 for details on what to change when porting a
-    // legacy command.
     $force_update = $options['force-update'];
     /** @var \Drupal\default_content_deploy\Importer $importer */
     $importer = \Drupal::service('default_content_deploy.importer');
@@ -255,8 +252,6 @@ class DefaultContentDeployCommands extends DrushCommands {
    * @aliases dcd-uuid-info,default-content-deploy-uuid-info
    */
   public function contentDeployUuidInfo() {
-    // See bottom of https://weitzman.github.io/blog/port-to-drush9 for details on what to change when porting a
-    // legacy command.
     $dcd = \Drupal::service('default_content_deploy.base');
     $import_status = $dcd->uuidInfo();
 
@@ -272,9 +267,12 @@ class DefaultContentDeployCommands extends DrushCommands {
   }
 
   /**
-   * @param $result_info
+   * Display info before/after import.
+   *
+   * @param array $result_info
+   *   Importer info.
    */
-  private function displayImportResult($result_info) {
+  private function displayImportResult(array $result_info) {
     $this->output()
       ->writeln(dt('- created: @count', ['@count' => $result_info['created']]));
     $this->output()

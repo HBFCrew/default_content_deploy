@@ -60,6 +60,8 @@ class DefaultContentDeployBase {
   }
 
   /**
+   * Logger.
+   *
    * @inheritdoc
    */
   public function logger() {
@@ -96,6 +98,7 @@ class DefaultContentDeployBase {
     // because it causes unnecessary questions during drush cim or cex commands.
     // But it was (by mistake) implemented in 8.x-1.0-alpha1 and 8.x-1.0-alpha2,
     // so we have to maintain backward compatibility.
+    // @todo Remove backward compatibility before beta version.
     try {
       $contentDir = config_get_config_directory('content_directory');
       $this->logger()
@@ -107,12 +110,13 @@ class DefaultContentDeployBase {
       // It is OK. $config_directories is not preferred way.
     }
     // No config found. Fall back to public:// directory.
+    // @todo Consider the security impact of Salt exposure in directory structure.
     $hash_salt = $this->settings->getHashSalt();
     return 'public://content_' . $hash_salt;
   }
 
   /**
-   * Get UUID info
+   * Get UUID info.
    *
    * Get System site, Admin and Anonymous UUIDs and Admin's name
    * and display current values.
@@ -203,7 +207,8 @@ class DefaultContentDeployBase {
   /**
    * Deletes all files and directories in the specified filepath recursively.
    *
-   * @param $path
+   * @param string $path
+   *   Directory. Its content will be deleted.
    * @param bool $deleteDir
    *   TRUE if you need to delete also directory in $path.
    *   FALSE if you need to delete only content of dir and its subdirs.

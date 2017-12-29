@@ -259,7 +259,7 @@ function drush_default_content_deploy_import_aliases() {
 }
 
 /**
- * Get UUID info
+ * Get UUID info.
  *
  * Get System site, Admin and Anonymous UUIDs and Admin's name
  * and display current values.

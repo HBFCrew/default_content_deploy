@@ -4,5 +4,5 @@ description: 'Default content deploy solution for Drupal 8. Export and import co
 package: Web services
 core: 8.x
 dependencies:
-  - default_content
+  - default_content:default_content
 configure: default_content_deploy.import

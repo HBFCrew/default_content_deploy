@@ -108,7 +108,7 @@ class Exporter extends DefaultContentDeployBase {
     $contentEntityTypes = $this->getContentEntityTypes();
 
     // Delete files in the content directory before export.
-    $this->deleteDirectoryContentRecursively($this->getContentFolder(), FALSE );
+    $this->deleteDirectoryContentRecursively($this->getContentFolder(), FALSE);
 
     foreach ($defaultEntityTypes as $entityType) {
       if (!in_array($entityType, $skipEntityType) && in_array($entityType, array_keys($contentEntityTypes))) {
@@ -210,7 +210,7 @@ class Exporter extends DefaultContentDeployBase {
   }
 
   /**
-   * Validate the entity type
+   * Validate the entity type.
    *
    * @param string $entityType
    *   Validated entity type.
@@ -229,7 +229,7 @@ class Exporter extends DefaultContentDeployBase {
   }
 
   /**
-   * Get Content Entity Types
+   * Get Content Entity Types.
    *
    * @return array
    *   Array of available content entity definitions keyed by type ID.
