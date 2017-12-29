@@ -6,12 +6,16 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\default_content\Exporter;
+use Psr\Log\LoggerAwareTrait;
+use Robo\Robo;
 use Symfony\Component\Serializer\Serializer;
 
 /**
  * A service for handling import and export of default content.
  */
 class DefaultContentDeployBase {
+
+  use LoggerAwareTrait;
 
   const DELIMITER = ',';
 
@@ -43,7 +47,11 @@ class DefaultContentDeployBase {
    * @param \Symfony\Component\Serializer\Serializer $serializer
    *   Serializer.
    */
-  public function __construct(Connection $database, Exporter $exporter, Settings $settings, EntityTypeManagerInterface $entityTypeManager, Serializer $serializer) {
+  public function __construct(Connection $database,
+                              Exporter $exporter,
+                              Settings $settings,
+                              EntityTypeManagerInterface $entityTypeManager,
+                              Serializer $serializer) {
     $this->database = $database;
     $this->exporter = $exporter;
     $this->settings = $settings;
@@ -52,25 +60,55 @@ class DefaultContentDeployBase {
   }
 
   /**
+   * @inheritdoc
+   */
+  public function logger() {
+    if ($this->logger) {
+      return $this->logger;
+    }
+    return Robo::logger();
+  }
+
+  /**
    * Get content folder.
    *
    * Folder is automatically created on install inside files folder.
    * Or you can override content folder in settings.php file.
    *
-   * @example $config_directories['content_directory'] = '../content';
+   * If no configuration is found, directory is created
+   * automatically at 'public://content_' . $hash_salt;
+   *
+   * @example Recommended usage:
+   *   $config['content_directory'] = '../content';
+   * @example Backward compatibility usage:
+   *   $config_directories['content_directory'] = '../content';
    *
    * @return string
    *   Return path to the content folder.
    */
   public function getContentFolder() {
-    $contentDir = config_get_config_directory('content_directory');
-    if (isset($contentDir)) {
+    // Use of $config['content_directory'] is recommended.
+    global $config;
+    if (isset($config) && isset($config['content_directory'])) {
+      return $config['content_directory'];
+    }
+    // Use of $config_directories['content_directory'] is not recommended,
+    // because it causes unnecessary questions during drush cim or cex commands.
+    // But it was (by mistake) implemented in 8.x-1.0-alpha1 and 8.x-1.0-alpha2,
+    // so we have to maintain backward compatibility.
+    try {
+      $contentDir = config_get_config_directory('content_directory');
+      $this->logger()
+        ->warning(dt('Use $config["content_directory"] instead of deprecated $config_directories["content_directory"] in your settings.php.'));
       return $contentDir;
     }
-    else {
-      $hash_salt = $this->settings->getHashSalt();
-      return 'public://content_' . $hash_salt;
+    catch (\Exception $exception) {
+      // The $config_directories['content_directory'] not found.
+      // It is OK. $config_directories is not preferred way.
     }
+    // No config found. Fall back to public:// directory.
+    $hash_salt = $this->settings->getHashSalt();
+    return 'public://content_' . $hash_salt;
   }
 
   /**
@@ -173,7 +211,8 @@ class DefaultContentDeployBase {
    * @return bool
    *   FALSE if errors.
    */
-  protected function deleteDirectoryContentRecursively($path, $deleteDir = FALSE) {
+  protected function deleteDirectoryContentRecursively($path,
+                                                       $deleteDir = FALSE) {
     if (is_dir($path)) {
       $dir = dir($path);
       while (($entry = $dir->read()) !== FALSE) {
