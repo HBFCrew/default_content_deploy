@@ -2,6 +2,9 @@
 
 namespace Drupal\default_content_deploy\Commands;
 
+use Drupal\default_content_deploy\DefaultContentDeployBase;
+use Drupal\default_content_deploy\Exporter;
+use Drupal\default_content_deploy\Importer;
 use Drush\Commands\DrushCommands;
 
 /**
@@ -10,6 +13,43 @@ use Drush\Commands\DrushCommands;
  * @package Drupal\default_content_deploy\Commands
  */
 class DefaultContentDeployCommands extends DrushCommands {
+
+  /**
+   * DCD Exporter.
+   *
+   * @var \Drupal\default_content_deploy\Exporter
+   */
+  private $exporter;
+
+  /**
+   * DCD Importer.
+   *
+   * @var \Drupal\default_content_deploy\Importer
+   */
+  private $importer;
+
+  /**
+   * DCD Base.
+   *
+   * @var \Drupal\default_content_deploy\DefaultContentDeployBase
+   */
+  private $base;
+
+  /**
+   * DefaultContentDeployCommands constructor.
+   *
+   * @param \Drupal\default_content_deploy\Exporter $exporter
+   *   DCD Exporter.
+   * @param \Drupal\default_content_deploy\Importer $importer
+   *   DCD Importer.
+   * @param \Drupal\default_content_deploy\DefaultContentDeployBase $base
+   *   DCD Base.
+   */
+  public function __construct(Exporter $exporter, Importer $importer, DefaultContentDeployBase $base) {
+    $this->exporter = $exporter;
+    $this->importer = $importer;
+    $this->base = $base;
+  }
 
   /**
    * Exports a single entity or group of entities.
@@ -51,9 +91,7 @@ class DefaultContentDeployCommands extends DrushCommands {
     $entity_bundles = $options['bundle'];
     $skip_entities = $options['skip_entities'];
 
-    /** @var \Drupal\default_content_deploy\Exporter $exporter */
-    $exporter = \Drupal::service('default_content_deploy.exporter');
-    $count = $exporter->export($entityType, $entity_bundles, $entity_ids, $skip_entities);
+    $count = $this->exporter->export($entityType, $entity_bundles, $entity_ids, $skip_entities);
 
     $this->logger->notice(dt('Exported @count entities.', ['@count' => $count]));
   }
@@ -98,9 +136,7 @@ class DefaultContentDeployCommands extends DrushCommands {
     $entity_bundles = $options['bundle'];
     $skip_entities = $options['skip_entities'];
 
-    /** @var \Drupal\default_content_deploy\Exporter $exporter */
-    $exporter = \Drupal::service('default_content_deploy.exporter');
-    $count = $exporter->exportWithReferences($entityType, $entity_bundles, $entity_ids, $skip_entities);
+    $count = $this->exporter->exportWithReferences($entityType, $entity_bundles, $entity_ids, $skip_entities);
     $this->logger->notice(dt('Exported @count entities with references.', ['@count' => $count]));
   }
 
@@ -132,9 +168,7 @@ class DefaultContentDeployCommands extends DrushCommands {
     $add_entity_type = $options['add_entity_type'];
     $skip_entity_type = $options['skip_entity_type'];
 
-    /** @var \Drupal\default_content_deploy\Exporter $exporter */
-    $exporter = \Drupal::service('default_content_deploy.exporter');
-    $count = $exporter->exportSite($add_entity_type, $skip_entity_type);
+    $count = $this->exporter->exportSite($add_entity_type, $skip_entity_type);
 
     foreach ($count as $entity => $value) {
       $this->logger->notice(dt('Exported @count entities of type @entity.', [
@@ -158,10 +192,7 @@ class DefaultContentDeployCommands extends DrushCommands {
    * @aliases dcdea,default-content-deploy-export-aliases
    */
   public function contentDeployExportAliases() {
-    /** @var \Drupal\default_content_deploy\Exporter $exporter */
-    $exporter = \Drupal::service('default_content_deploy.exporter');
-    $aliases = $exporter->exportUrlAliases();
-
+    $aliases = $this->exporter->exportUrlAliases();
     $this->logger->notice(dt('Exported @count aliases.', ['@count' => $aliases]));
   }
 
@@ -191,11 +222,9 @@ class DefaultContentDeployCommands extends DrushCommands {
    */
   public function contentDeployImport(array $options = ['force-update' => NULL]) {
     $force_update = $options['force-update'];
-    /** @var \Drupal\default_content_deploy\Importer $importer */
-    $importer = \Drupal::service('default_content_deploy.importer');
 
     // Perform read only update.
-    $result_info = $importer->deployContent($force_update, FALSE);
+    $result_info = $this->importer->deployContent($force_update, FALSE);
     $this->output()
       ->writeln(dt('@count entities will be processed.', ['@count' => $result_info['processed']]));
     $this->displayImportResult($result_info);
@@ -206,8 +235,8 @@ class DefaultContentDeployCommands extends DrushCommands {
     }
     if ($this->io()->confirm(dt('Do you really want to continue?'))) {
       // Perform update.
-      $result_info = $importer->deployContent($force_update, TRUE);
-      $import_status = $importer->importUrlAliases();
+      $result_info = $this->importer->deployContent($force_update, TRUE);
+      $import_status = $this->importer->importUrlAliases();
 
       // Display results.
       $this->logger()
@@ -232,10 +261,7 @@ class DefaultContentDeployCommands extends DrushCommands {
    * @aliases dcdia,default-content-deploy-import-aliases
    */
   public function contentDeployImportAliases() {
-    /** @var \Drupal\default_content_deploy\Importer $importer */
-    $importer = \Drupal::service('default_content_deploy.importer');
-    $import_status = $importer->importUrlAliases();
-
+    $import_status = $this->importer->importUrlAliases();
     $this->logger()
       ->notice(dt('Imported @count aliases.', ['@count' => $import_status['imported']]));
     $this->logger()
@@ -252,10 +278,7 @@ class DefaultContentDeployCommands extends DrushCommands {
    * @aliases dcd-uuid-info,default-content-deploy-uuid-info
    */
   public function contentDeployUuidInfo() {
-    $dcd = \Drupal::service('default_content_deploy.base');
-    $import_status = $dcd->uuidInfo();
-
-    // Display current values.
+    $import_status = $this->base->uuidInfo();
     $this->output()
       ->writeln(dt('System.site UUID = @uuid', ['@uuid' => $import_status['current_site_uuid']]));
     $this->output()
