@@ -78,40 +78,25 @@ class Exporter extends DefaultContentDeployBase {
   /**
    * Export complete site.
    *
-   * @param string $addEntityType
-   *   Add entity types what are you want to export.
    * @param string $skipEntityType
    *   Add entity types what are you want to skip.
    *
    * @return array
    *   Return number of exported entities grouped by entity type.
    */
-  public function exportSite($addEntityType = '', $skipEntityType = '') {
+  public function exportSite($skipEntityType = '') {
     $count = [];
 
-    $addEntityType = explode(parent::DELIMITER, $addEntityType);
     $skipEntityType = explode(parent::DELIMITER, $skipEntityType);
 
-    $defaultEntityTypes = [
-      'block_content',
-      'comment',
-      'file',
-      'node',
-      'menu_link_content',
-      'taxonomy_term',
-      'user',
-      'media',
-      'paragraph',
-    ];
-
-    $defaultEntityTypes += array_unique(array_merge($defaultEntityTypes, $addEntityType));
     $contentEntityTypes = $this->getContentEntityTypes();
 
     // Delete files in the content directory before export.
     $this->deleteDirectoryContentRecursively($this->getContentFolder(), FALSE);
 
-    foreach ($defaultEntityTypes as $entityType) {
-      if (!in_array($entityType, $skipEntityType) && in_array($entityType, array_keys($contentEntityTypes))) {
+    foreach ($contentEntityTypes as $entityType => $entityDefinition) {
+      // Skip specified entities in --skip_entity_type option.
+      if (!in_array($entityType, $skipEntityType)) {
         $exportedEntities = $this->export($entityType);
         $count[$entityType] = $exportedEntities;
       }
@@ -229,10 +214,11 @@ class Exporter extends DefaultContentDeployBase {
   }
 
   /**
-   * Get Content Entity Types.
+   * Get all Content Entity Types.
    *
    * @return array
    *   Array of available content entity definitions keyed by type ID.
+   *   [entity_type => \Drupal\Core\Entity\EntityTypeInterface]
    */
   protected function getContentEntityTypes() {
     $contentEntityTypes = [];

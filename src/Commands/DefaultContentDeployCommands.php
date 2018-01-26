@@ -153,9 +153,6 @@ class DefaultContentDeployCommands extends DrushCommands {
    * @option skip_entity_type The entity types to skip.
    * @usage drush dcdes
    *   Export complete website.
-   * @usage drush dcdes --add_entity_type=collection,my_custom_entity
-   *   Export complete website plus custom entities collection and
-   *   my_custom_entity.
    * @usage drush dcdes --skip_entity_type=node,user
    *   Export complete website but skip nodes and users.
    * @validate-module-enabled default_content
@@ -165,10 +162,13 @@ class DefaultContentDeployCommands extends DrushCommands {
     'add_entity_type' => NULL,
     'skip_entity_type' => NULL,
   ]) {
-    $add_entity_type = $options['add_entity_type'];
+    // @todo Remove in beta version.
+    if ($options['add_entity_type']) {
+      $this->logger->notice(dt('Option add_entity_type is deprecated and will be disabled in a future. The drush dcdes command exports all content entity by default.'));
+    }
     $skip_entity_type = $options['skip_entity_type'];
 
-    $count = $this->exporter->exportSite($add_entity_type, $skip_entity_type);
+    $count = $this->exporter->exportSite($skip_entity_type);
 
     foreach ($count as $entity => $value) {
       $this->logger->notice(dt('Exported @count entities of type @entity.', [
@@ -177,7 +177,7 @@ class DefaultContentDeployCommands extends DrushCommands {
       ]));
     }
 
-    // Also export path alaiases.
+    // Also export path aliases.
     $this->contentDeployExportAliases();
   }
 
