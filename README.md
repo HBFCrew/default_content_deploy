@@ -151,7 +151,8 @@ Export all nodes and skip nodes with references with entity id 5 and 7.
 ## drush default-content-deploy:export-site, drush dcdes
 
 Exports a whole site content + path aliases. You can exclude entities 
-by their type.
+by their type. Use 'drush dcd-entity-list' for list of all content entities
+on this system.
 
 ### Options
 
@@ -246,6 +247,15 @@ Display current values of System Site, Admin and Anonymous UUIDs, Admin name.
 **Example**
 
     drush dcd-uuid-info
+
+
+## drush default-content-deploy:entity-list, drush dcd-entity-list
+
+Displays all current content entity types.
+
+**Example**
+
+    drush dcd-entity-list
 
 
 

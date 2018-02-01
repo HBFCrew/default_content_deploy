@@ -45,7 +45,9 @@ class DefaultContentDeployCommands extends DrushCommands {
    * @param \Drupal\default_content_deploy\DefaultContentDeployBase $base
    *   DCD Base.
    */
-  public function __construct(Exporter $exporter, Importer $importer, DefaultContentDeployBase $base) {
+  public function __construct(Exporter $exporter,
+                              Importer $importer,
+                              DefaultContentDeployBase $base) {
     $this->exporter = $exporter;
     $this->importer = $importer;
     $this->base = $base;
@@ -143,14 +145,24 @@ class DefaultContentDeployCommands extends DrushCommands {
   /**
    * Exports a whole site content.
    *
+   * Config directory will be emptied
+   * and all content of all entities will be exported.
+   *
+   * Use 'drush dcd-entity-list' for list of all content entities
+   * on this system. You can exclude any entity type form export.
+   *
+   * The content directory can be set in setting.php
+   * as $config['content_directory'] or will be created in public:// directory.
+   *
    * @param array $options
-   *   An associative array of options whose values come
-   *   from cli, aliases, config, etc.
+   *   An associative array of options.
    *
    * @command default-content-deploy:export-site
    *
-   * @option add_entity_type DEPRECATED. Will be removed in beta. The dcdes command exports all entity types.
+   * @option add_entity_type DEPRECATED. Will be removed in beta. The dcdes
+   *   command exports all entity types.
    * @option skip_entity_type The entity types to skip.
+   *   Use 'drush dcd-entity-list' for list of all content entities.
    * @usage drush dcdes
    *   Export complete website.
    * @usage drush dcdes --skip_entity_type=node,user
@@ -287,6 +299,25 @@ class DefaultContentDeployCommands extends DrushCommands {
       ->writeln(dt('Admin UUID = @uuid', ['@uuid' => $import_status['current_uuid_admin']]));
     $this->output()
       ->writeln(dt('Admin\'s name = @name', ['@name' => $import_status['current_admin_name']]));
+  }
+
+  /**
+   * List current content entity types.
+   *
+   * @command default-content-deploy:entity-list
+   * @usage drush dcd-entity-list
+   *   Displays all current content entity types.
+   * @aliases dcd-entity-list,default-content-deploy-entity-list
+   */
+  public function contentEntityList() {
+    $contentEntityList = $this->exporter->getContentEntityTypes();
+
+    $this->output()
+      ->writeln(dt('This Drupal system contains following content entities:'));
+    $this->output()
+      ->writeln(implode(",", array_keys($contentEntityList)));
+    $this->output()
+      ->writeln('');
   }
 
   /**
