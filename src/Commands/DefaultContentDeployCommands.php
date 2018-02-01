@@ -149,7 +149,7 @@ class DefaultContentDeployCommands extends DrushCommands {
    * and all content of all entities will be exported.
    *
    * Use 'drush dcd-entity-list' for list of all content entities
-   * on this system. You can exclude any entity type form export.
+   * on this system. You can exclude any entity type from export.
    *
    * The content directory can be set in setting.php
    * as $config['content_directory'] or will be created in public:// directory.
