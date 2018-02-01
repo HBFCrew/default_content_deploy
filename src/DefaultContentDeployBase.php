@@ -110,8 +110,9 @@ class DefaultContentDeployBase {
       // It is OK. $config_directories is not preferred way.
     }
     // No config found. Fall back to public:// directory.
-    // @todo Consider the security impact of Salt exposure in directory structure.
-    $hash_salt = $this->settings->getHashSalt();
+    // Get part of hashed Drupal salt due to security reason
+    // and construct content directory name.
+    $hash_salt = substr(sha1($this->settings->getHashSalt()), 0, 8);
     return 'public://content_' . $hash_salt;
   }
 
