@@ -149,7 +149,6 @@ class DefaultContentDeployCommands extends DrushCommands {
    *
    * @command default-content-deploy:export-site
    *
-   * @option add_entity_type The entity types to add.
    * @option skip_entity_type The entity types to skip.
    * @usage drush dcdes
    *   Export complete website.
@@ -197,7 +196,7 @@ class DefaultContentDeployCommands extends DrushCommands {
   }
 
   /**
-   * Import all the content defined in a module.
+   * Import all the content defined in a content directory.
    *
    * @param array $options
    *   An associative array of options whose values come

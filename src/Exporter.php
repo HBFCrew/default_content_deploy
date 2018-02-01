@@ -33,7 +33,7 @@ class Exporter extends DefaultContentDeployBase {
     $exportedEntities = [];
     // Get entities for export.
     $exportedEntityIds = $this->getEntityIdsForExport($entityType, $entityBundle, $entityIds, $skipEntities);
-    // Serialize entities and get uuids for entities.
+    // Serialize entities and get their UUIDs.
     foreach ($exportedEntityIds as $entityId) {
       $exportedEntity = $this->exporter->exportContent($entityType, $entityId);
       $deseralizedEntity = $this->serializer->decode($exportedEntity, 'hal_json');

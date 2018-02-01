@@ -80,7 +80,7 @@ function default_content_deploy_drush_command() {
 
   $items['default-content-deploy-import'] = [
     'aliases' => ['dcdi'],
-    'description' => dt('Import all the content defined in a module.'),
+    'description' => dt('Import all the content defined in a content directory.'),
     'options' => [
       'force-update' => dt('Content with different UUID but same ID will be updated (UUID will be replaced).'),
     ],
