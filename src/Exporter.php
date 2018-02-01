@@ -220,7 +220,7 @@ class Exporter extends DefaultContentDeployBase {
    *   Array of available content entity definitions keyed by type ID.
    *   [entity_type => \Drupal\Core\Entity\EntityTypeInterface]
    */
-  protected function getContentEntityTypes() {
+  public function getContentEntityTypes() {
     $contentEntityTypes = [];
     $entityTypes = $this->entityTypeManager->getDefinitions();
     /* @var $definition \Drupal\Core\Entity\EntityTypeInterface */
@@ -229,6 +229,7 @@ class Exporter extends DefaultContentDeployBase {
         $contentEntityTypes[$type] = $definition;
       }
     }
+    ksort($contentEntityTypes);
     return $contentEntityTypes;
   }
 
