@@ -150,33 +150,17 @@ Export all nodes and skip nodes with references with entity id 5 and 7.
 
 ## drush default-content-deploy:export-site, drush dcdes
 
-Exports a whole site content + path aliases. You can include/exclude entities 
+Exports a whole site content + path aliases. You can exclude entities 
 by their type.
-
-Entity types exported by default:
-
-- block_content
-- comment
-- file
-- node
-- menu_link_content
-- taxonomy_term
-- user
-- media
-- paragraph.
 
 ### Options
 
-* **add_entity_type** - entity types to include to export.
 * **skip_entity_type** - entity types to exclude from export.
 
 **Examples**
 
     drush dcdes
 Export complete website.
-    
-    drush dcdes --add_entity_type=collection,my_custom_entity
-Export complete website plus custom entities collection and my_custom_entity.
     
     drush dcdes --skip_entity_type=node,user
 Export complete website but skip nodes and users.

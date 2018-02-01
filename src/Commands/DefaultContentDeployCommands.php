@@ -149,6 +149,7 @@ class DefaultContentDeployCommands extends DrushCommands {
    *
    * @command default-content-deploy:export-site
    *
+   * @option add_entity_type DEPRECATED. Will be removed in beta. The dcdes command exports all entity types.
    * @option skip_entity_type The entity types to skip.
    * @usage drush dcdes
    *   Export complete website.

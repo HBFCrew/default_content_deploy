@@ -60,12 +60,10 @@ function default_content_deploy_drush_command() {
     'aliases' => ['dcdes'],
     'description' => dt('Exports a site.'),
     'options' => [
-      'add_entity_type' => dt('The entity types to add.'),
       'skip_entity_type' => dt('The entity types to skip.'),
     ],
     'examples' => [
       'drush dcdes' => 'Export complete website.',
-      'drush dcdes --add_entity_type=collection,my_custom_entity' => 'Export complete website plus custom entities collection and my_custom_entity.',
       'drush dcdes --skip_entity_type=node,user' => 'Export complete website but skip nodes and users.',
     ],
   ] + $base;
@@ -167,16 +165,14 @@ function drush_default_content_deploy_export_with_references($entity_type_id) {
  * Add entitytype and Skip entity type can be delimited by comma.
  *
  * @example drush dcdes node
- * @example drush dcdes node --add_entity_type=collection,feedsource
  * @example drush dcdes node --skip_entity_type=node
  */
 function drush_default_content_deploy_export_site() {
-  $add_entity_type = drush_get_option('add_entity_type', '');
   $skip_entity_type = drush_get_option('skip_entity_type', '');
 
   /** @var \Drupal\default_content_deploy\Exporter $exporter */
   $exporter = \Drupal::service('default_content_deploy.exporter');
-  $count = $exporter->exportSite($add_entity_type, $skip_entity_type);
+  $count = $exporter->exportSite($skip_entity_type);
 
   foreach ($count as $entity => $value) {
     drush_log(dt('Exported @count entities of type @entity.', [
