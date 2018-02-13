@@ -6,6 +6,9 @@ use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\Entity;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Path\AliasStorageInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\default_content\Importer as DCImporter;
 use Drupal\default_content\ScannerInterface;
@@ -45,6 +48,27 @@ class Importer extends DCImporter {
   private $dcdBase;
 
   /**
+   * The module handler service.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  private $moduleHandler;
+
+  /**
+   * The default_content_deploy logger channel.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  private $logger;
+
+  /**
+   * The path alias storage service.
+   *
+   * @var \Drupal\Core\Path\AliasStorageInterface
+   */
+  private $pathAliasStorage;
+
+  /**
    * Constructs the default content deploy manager.
    *
    * @param \Symfony\Component\Serializer\Serializer $serializer
@@ -63,6 +87,12 @@ class Importer extends DCImporter {
    *   The account switcher.
    * @param \Drupal\default_content_deploy\DefaultContentDeployBase $dcdBase
    *   DefaultContentDeployBase.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   The module handler service.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
+   *   The logger factory service.
+   * @param \Drupal\Core\Path\AliasStorageInterface $path_alias_storage
+   *   The path alias storage service.
    */
   public function __construct(Serializer $serializer,
                               EntityTypeManagerInterface $entity_type_manager,
@@ -71,12 +101,18 @@ class Importer extends DCImporter {
                               ScannerInterface $scanner,
                               $link_domain,
                               AccountSwitcherInterface $account_switcher,
-                              DefaultContentDeployBase $dcdBase) {
+                              DefaultContentDeployBase $dcdBase,
+                              ModuleHandlerInterface $module_handler,
+                              LoggerChannelFactoryInterface $logger_factory,
+                              AliasStorageInterface $path_alias_storage) {
     parent::__construct($serializer, $entity_type_manager, $link_manager, $event_dispatcher, $scanner, $link_domain, $account_switcher);
     $this->dcdBase = $dcdBase;
+    $this->moduleHandler = $module_handler;
+    $this->logger = $logger_factory->get('default_content_deploy');
+    $this->pathAliasStorage = $path_alias_storage;
     $this->fileEntityEnabled = (
-      \Drupal::moduleHandler()->moduleExists('file_entity') ||
-      \Drupal::moduleHandler()->moduleExists('better_normalizers')
+      $this->moduleHandler->moduleExists('file_entity') ||
+      $this->moduleHandler->moduleExists('better_normalizers')
     );
   }
 
@@ -347,11 +383,7 @@ class Importer extends DCImporter {
               '@method' => $saving_method,
               '@file' => $file->name,
             ];
-            \Drupal::logger('default_content_deploy')
-              ->info(
-                'Entity @type/@bundle, ID: @id @method successfully',
-                $saved_entity_log_info
-              );
+            $this->logger->info('Entity @type/@bundle, ID: @id @method successfully', $saved_entity_log_info);
           }
           $created[$entity->uuid()] = $entity;
           $result_info[$saving_method]++;
@@ -377,8 +409,6 @@ class Importer extends DCImporter {
    *   Return number of imported or skipped aliases.
    */
   public function importUrlAliases() {
-    $pathAliasStorage = \Drupal::service('path.alias_storage');
-    $path_alias_storage = $pathAliasStorage;
     $count = 0;
     $skipped = 0;
     $file = $this->dcdBase->getContentFolder() . '/'
@@ -389,9 +419,9 @@ class Importer extends DCImporter {
       $path_aliases = Json::decode($aliases);
 
       foreach ($path_aliases as $alias) {
-        if (!$path_alias_storage->aliasExists($alias['alias'], $alias['langcode'])) {
+        if (!$this->pathAliasStorage->aliasExists($alias['alias'], $alias['langcode'])) {
           if ($this->writeEnable !== FALSE) {
-            $path_alias_storage->save($alias['source'], $alias['alias'], $alias['langcode']);
+            $this->pathAliasStorage->save($alias['source'], $alias['alias'], $alias['langcode']);
             $count++;
           }
         }

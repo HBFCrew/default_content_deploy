@@ -164,7 +164,7 @@ class Exporter extends DefaultContentDeployBase {
 
     // Add all entities by given bundle.
     if (!empty($entityBundle)) {
-      $query = \Drupal::entityQuery($entityType);
+      $query = $this->entityTypeManager->getStorage($entityType)->getQuery();
       $bundles = explode(parent::DELIMITER, $entityBundle);
       $bundleType = 'type';
       if ($entityType == 'taxonomy_term') {
@@ -180,7 +180,7 @@ class Exporter extends DefaultContentDeployBase {
 
     // If still no entities to export, export all entities of given type.
     if (empty($exportedEntityIds)) {
-      $query = \Drupal::entityQuery($entityType);
+      $query = $this->entityTypeManager->getStorage($entityType)->getQuery();
       $entityIds = $query->execute();
       $exportedEntityIds += $entityIds;
     }

@@ -4,7 +4,7 @@ services:
     arguments: ['@database', '@default_content.exporter', '@settings', '@entity_type.manager', '@serializer']
   default_content_deploy.importer:
     class: Drupal\default_content_deploy\Importer
-    arguments: ['@serializer', '@entity_type.manager', '@hal.link_manager', '@event_dispatcher', '@default_content.scanner', '%default_content.link_domain%', '@account_switcher', '@default_content_deploy.base']
+    arguments: ['@serializer', '@entity_type.manager', '@hal.link_manager', '@event_dispatcher', '@default_content.scanner', '%default_content.link_domain%', '@account_switcher', '@default_content_deploy.base', '@module_handler', '@logger.factory', '@path.alias_storage']
   default_content_deploy.exporter:
     class: Drupal\default_content_deploy\Exporter
     arguments: ['@database', '@default_content.exporter', '@settings', '@entity_type.manager', '@serializer']
