@@ -158,8 +158,8 @@ class Exporter extends DefaultContentDeployBase {
 
     // At first, export entities by entity id from --entity_id parameter.
     if (!empty($entityIds)) {
-      $entityIds = explode(parent::DELIMITER, $entityIds);
-      $exportedEntityIds += $entityIds;
+      $selectedEntityIds = explode(parent::DELIMITER, $entityIds);
+      $exportedEntityIds += $selectedEntityIds;
     }
 
     // Add all entities by given bundle.
@@ -174,22 +174,21 @@ class Exporter extends DefaultContentDeployBase {
         $bundleType = 'menu_name';
       }
       $query->condition($bundleType, $bundles, 'IN');
-      $entityIds = $query->execute();
-      $exportedEntityIds += $entityIds;
+      $selectedEntityIds = $query->execute();
+      $exportedEntityIds += $selectedEntityIds;
     }
 
-    // If still no entities to export, export all entities of given type.
-    if (empty($exportedEntityIds)) {
+    // If no bundle and no specific IDs, export all entities of given type.
+    if (empty($entityBundle) && empty($entityIds)) {
       $query = $this->entityTypeManager->getStorage($entityType)->getQuery();
-      $entityIds = $query->execute();
-      $exportedEntityIds += $entityIds;
+      $exportedEntityIds = $query->execute();
     }
 
     // Explode skip entities.
-    $skipEntities = explode(parent::DELIMITER, $skipEntities);
+    $skipEntityIds = explode(parent::DELIMITER, $skipEntities);
 
-    // Diff entityIds against skipEntities.
-    $exportedEntityIds = array_diff($exportedEntityIds, $skipEntities);
+    // Remove skipped entities from $exportedEntityIds.
+    $exportedEntityIds = array_diff($exportedEntityIds, $skipEntityIds);
 
     return $exportedEntityIds;
   }

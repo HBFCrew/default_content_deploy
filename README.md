@@ -95,8 +95,11 @@ Exports a single entity or group of entities with no references.
 
 ### Examples
 
+    drush dcde node
+Export all nodes.
+
     drush dcde node --bundle=page
-Export all nodes with bundle (content type) page
+Export all nodes with bundle (content type) page.
     
     drush dcde node --bundle=page,article --entity_id=2,3,4
 Export all nodes with bundle page or article plus nodes 
