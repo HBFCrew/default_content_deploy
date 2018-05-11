@@ -165,6 +165,7 @@ class Exporter extends DefaultContentDeployBase {
     // Add all entities by given bundle.
     if (!empty($entityBundle)) {
       $query = $this->entityTypeManager->getStorage($entityType)->getQuery();
+      $query = $query->accessCheck(FALSE);
       $bundles = explode(parent::DELIMITER, $entityBundle);
       $bundleType = 'type';
       if ($entityType == 'taxonomy_term') {
@@ -181,6 +182,7 @@ class Exporter extends DefaultContentDeployBase {
     // If no bundle and no specific IDs, export all entities of given type.
     if (empty($entityBundle) && empty($entityIds)) {
       $query = $this->entityTypeManager->getStorage($entityType)->getQuery();
+      $query = $query->accessCheck(FALSE);
       $exportedEntityIds = $query->execute();
     }
 
