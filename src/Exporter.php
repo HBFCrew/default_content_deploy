@@ -12,7 +12,7 @@ use Drush\Drush;
 class Exporter extends DefaultContentDeployBase {
 
   /**
-   * Export entites by entity type, id or bundle.
+   * Export entities by entity type, id or bundle.
    *
    * @param string $entityType
    *   Entity Type.
@@ -25,6 +25,8 @@ class Exporter extends DefaultContentDeployBase {
    *
    * @return int
    *   Number of exported entities.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    */
   public function export($entityType,
                          $entityBundle = '',
@@ -60,6 +62,8 @@ class Exporter extends DefaultContentDeployBase {
    *
    * @return int
    *   Number of exported entities.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    */
   public function exportWithReferences($entityType,
                                        $entityBundle = '',
@@ -83,6 +87,8 @@ class Exporter extends DefaultContentDeployBase {
    *
    * @return array
    *   Return number of exported entities grouped by entity type.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    */
   public function exportSite($skipEntityType = '') {
     $count = [];
@@ -142,6 +148,8 @@ class Exporter extends DefaultContentDeployBase {
    *
    * @return array
    *   Return array of entity ids.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    */
   protected function getEntityIdsForExport($entityType,
                                            $entityBundle,

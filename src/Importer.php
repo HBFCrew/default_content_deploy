@@ -135,7 +135,6 @@ class Importer extends DCImporter {
    */
   public function deployContent($force_update = FALSE, $writeEnable = FALSE) {
     $this->writeEnable = $writeEnable;
-    $created = [];
     $result_info = [
       'processed' => 0,
       'created' => 0,
@@ -385,7 +384,6 @@ class Importer extends DCImporter {
             ];
             $this->logger->info('Entity @type/@bundle, ID: @id @method successfully', $saved_entity_log_info);
           }
-          $created[$entity->uuid()] = $entity;
           $result_info[$saving_method]++;
         }
       }
