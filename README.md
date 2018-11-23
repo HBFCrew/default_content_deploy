@@ -60,15 +60,15 @@ for set Site UUID to identical value.
 
 Set DCD content directory in settings.php. We recommend to place directory 
 outside of the document root. If no configuration is found, directory is created
-automatically at 'public://content_' . $hash_salt;
+automatically at 'public://content_{hash_salt_derived_key};
 
 **Example**
 
 
-    // relative path
-    $config['content_directory'] = '../content';
-    // absolute path
-    $config['content_directory'] = '/var/dcd/content';
+    // Relative path.
+    $settings['default_content_deploy_content_directory'] = '../content';
+    // Absolute path.
+    $settings['default_content_deploy_content_directory'] = '/var/dcd/content';
 
 # Drush commands
 
@@ -195,7 +195,7 @@ Import URL aliases.
 Deploy (import/create/update/replace) content from all exported files. 
 
 JSON files with exported content is expected in the directory defined 
-in **$config['content_directory']**. It can be defined in the **settings.php**. 
+in **$settings['default_content_deploy_content_directory']**. It can be defined in the **settings.php**. 
 See example in the Configuration section above.
 
 
@@ -310,7 +310,7 @@ install clones of the project. They must:
 1. Clone project from the Git repository
 2. Set identical information (identical setting in settings.php)
   1. Common directory for config management ($config_directories['sync'])
-  2. Common directory for content export/import ($config['content_directory'])
+  2. Common directory for content export/import ($settings['default_content_deploy_content_directory'])
   3. Common file or value for Drupal salt ($settings['hash_salt'])
 3. Install Drupal with the same installation profile
 4. Set Site UUID to identical value.
