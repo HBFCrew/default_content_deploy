@@ -4,6 +4,8 @@ namespace Drupal\default_content_deploy;
 
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Session\UserSession;
+use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\default_content\Exporter;
 use Psr\Log\LoggerAwareTrait;
@@ -33,6 +35,8 @@ class DefaultContentDeployBase {
 
   protected $serializer;
 
+  protected $accountSwitcher;
+
   /**
    * DefaultContentDeployBase constructor.
    *
@@ -46,17 +50,21 @@ class DefaultContentDeployBase {
    *   Entity Type Manager.
    * @param \Symfony\Component\Serializer\Serializer $serializer
    *   Serializer.
+   * @param \Drupal\Core\Session\AccountSwitcherInterface
+   *   The account switcher service.
    */
   public function __construct(Connection $database,
                               Exporter $exporter,
                               Settings $settings,
                               EntityTypeManagerInterface $entityTypeManager,
-                              Serializer $serializer) {
+                              Serializer $serializer,
+                              AccountSwitcherInterface $account_switcher) {
     $this->database = $database;
     $this->exporter = $exporter;
     $this->settings = $settings;
     $this->entityTypeManager = $entityTypeManager;
     $this->serializer = $serializer;
+    $this->accountSwitcher = $account_switcher;
   }
 
   /**

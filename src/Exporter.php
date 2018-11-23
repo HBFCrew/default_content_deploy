@@ -4,6 +4,7 @@ namespace Drupal\default_content_deploy;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Entity\ContentEntityType;
+use Drupal\Core\Session\UserSession;
 
 /**
  * A service for handling export of default content.
@@ -31,6 +32,9 @@ class Exporter extends DefaultContentDeployBase {
                          $entityBundle = '',
                          $entityIds = '',
                          $skipEntities = '') {
+    // Switch to limitless admin account.
+    // It solves limitations during export a user entities.
+    $this->accountSwitcher->switchTo(new UserSession(['uid' => 1]));
     $exportedEntities = [];
     // Get entities for export.
     $exportedEntityIds = $this->getEntityIdsForExport($entityType, $entityBundle, $entityIds, $skipEntities);
@@ -44,6 +48,7 @@ class Exporter extends DefaultContentDeployBase {
     // Export all entities to folder.
     $this->exporter->writeDefaultContent($exportedEntities, $this->getContentFolder());
 
+    $this->accountSwitcher->switchBack();
     return count($exportedEntityIds);
   }
 
