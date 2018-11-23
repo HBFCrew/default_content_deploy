@@ -4,7 +4,6 @@ namespace Drupal\default_content_deploy;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Entity\ContentEntityType;
-use Drush\Drush;
 
 /**
  * A service for handling export of default content.
@@ -158,9 +157,6 @@ class Exporter extends DefaultContentDeployBase {
     $exportedEntityIds = [];
     $contentEntityTypes = $this->getContentEntityTypes();
     if (!$this->validateEntityType($entityType, $contentEntityTypes)) {
-      // @todo Is any better method how to call writeln()?
-      Drush::output()->writeln(dt('List of available content entity types:'));
-      Drush::output()->writeln(implode(', ', array_keys($contentEntityTypes)));
       throw new \InvalidArgumentException(sprintf('Entity type "%s" does not exist', $entityType));
     }
 
