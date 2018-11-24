@@ -218,12 +218,11 @@ See example in the Configuration section above.
 
 ***drush dcdi --force-update***
 
-- Existing entity is overwritten by the imported entity (the old entity is
-deleted and a new entity with the same ID is created from imported JSON file).
-- There is an exception for the user-type entity that only updates the UUID 
-and the username, because overwriting a user entity would result in creating 
-a blocked user without password and email (the user entity export JSON file 
-doesn't contain such information).
+- Existing entity (has same ID, but different UUID) is overwritten 
+by the imported entity (the old entity is deleted and a new entity with
+the same ID is created from imported JSON file). The UUID is overwritten.
+- If the user entity is overwritten, an existing password is lost.
+ 
 
 ***drush dcdi --verbose***
 
