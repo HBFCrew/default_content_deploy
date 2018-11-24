@@ -73,13 +73,16 @@ class Exporter extends DefaultContentDeployBase {
                                        $entityBundle = '',
                                        $entityIds = '',
                                        $skipEntities = '') {
+    // Switch to limitless admin account.
+    // It solves limitations during export a user entities.
+    $this->accountSwitcher->switchTo(new UserSession(['uid' => 1]));
     // Get entities for export.
     $exportedEntityIds = $this->getEntityIdsForExport($entityType, $entityBundle, $entityIds, $skipEntities);
     foreach ($exportedEntityIds as $entityId) {
       $exportedEntityByType = $this->exporter->exportContentWithReferences($entityType, $entityId);
       $this->exporter->writeDefaultContent($exportedEntityByType, $this->getContentFolder());
     }
-
+    $this->accountSwitcher->switchBack();
     return count($exportedEntityIds);
   }
 
