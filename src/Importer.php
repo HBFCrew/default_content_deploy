@@ -286,9 +286,7 @@ class Importer extends DCImporter {
             }
 
             // Check if destination entity is older than existing content.
-            // Always skip users, because update user
-            // caused blocked user without password.
-            if ($entity_type_id != 'user' && $current_entity_changed_time < $entity_changed_time) {
+            if ($current_entity_changed_time < $entity_changed_time) {
               // Update existing older entity with newer one.
               if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
                 $message = t("update");
@@ -319,25 +317,11 @@ class Importer extends DCImporter {
           }
           // Non-existing UUID. Test if exists Current entity by ID (not UUID).
           // If YES, then we can replace it or skip
-          // - or update only user's uuid and name.
           elseif ($current_entity_object = $this->loadEntityById($entity_type_id, $entity->id())) {
+            // Entity with same ID already exists, but has different UUID.
             if ($force_update) {
-              // Don't recreate existing user entity, because it would be
-              // blocked and without password. Only update its UUID and name.
-              if ($entity_type_id == 'user') {
-                if ($this->writeEnable) {
-                  $this->dcdBase->updateUserEntity($entity->id(), $entity->uuid(), $entity->label());
-                }
-                $result_info['updated']++;
-                if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
-                  $message = t("force-update");
-                  print($message . "\t");
-                }
-                // That is all. Go to the next entity.
-                continue;
-              }
-              // Another old entities must be deleted and save again
-              // with the new content.
+              // Force update - destination entity must be deleted
+              // and created again with the new content and UUID.
               if ($this->writeEnable) {
                 $current_entity_object->delete();
               }
