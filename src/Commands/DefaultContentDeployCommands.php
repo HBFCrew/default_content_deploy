@@ -98,7 +98,7 @@ class DefaultContentDeployCommands extends DrushCommands {
       $this->logger->notice(dt('Exported @count entities.', ['@count' => $count]));
     }
     catch (\InvalidArgumentException $e) {
-      $this->logger->notice($e->getMessage());
+      $this->logger->error($e->getMessage());
       $this->logger->notice(dt('List of available content entity types:'));
       $this->logger->notice(implode(', ', array_keys($this->exporter->getContentEntityTypes())));
     }

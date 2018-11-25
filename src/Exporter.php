@@ -180,9 +180,20 @@ class Exporter extends DefaultContentDeployBase {
       $query = $this->entityTypeManager->getStorage($entityType)->getQuery();
       $query = $query->accessCheck(FALSE);
       $bundles = explode(parent::DELIMITER, $entityBundle);
-      $type = $this->entityTypeManager->getDefinition($entityType);
-      $bundleType = $type->getKey('bundle');
-      $query->condition($bundleType, $bundles, 'IN');
+      // Bundle key is e.g.: 'vid' for taxonomy_term, 'type' for node.
+      // For menu_link_content entity we need menu_name as bundle key.
+      if ($entityType == 'menu_link_content') {
+        $bundleKey = 'menu_name';
+      }
+      else {
+        $type = $this->entityTypeManager->getDefinition($entityType);
+        $bundleKey = $type->getKey('bundle');
+      }
+      if (!$bundleKey) {
+        // Entity has not defined bundle key (e.g. user).
+        throw new \InvalidArgumentException(sprintf('Entity type "%s" does not have a bundle', $entityType));
+      }
+      $query->condition($bundleKey, $bundles, 'IN');
       $selectedEntityIds = $query->execute();
       $exportedEntityIds += $selectedEntityIds;
     }
