@@ -36,7 +36,9 @@ https://www.drupal.org/project/better_normalizers
 
 ## Sites config synchronization (optional)
 
-If you need to synchronize only content, you can skip this chapter.
+If you are sure the export and import sites have the same configuration and you 
+need to synchronize only content, you can skip this chapter.
+
 You need identical site UUID for successful syncing configuration between sites. 
 If you need to sychronize configuration, use drush **config-set** 
 for set Site UUID to identical value.
@@ -44,6 +46,17 @@ for set Site UUID to identical value.
 **Example**
 
     drush config-set "system.site" uuid 11111111-1111-1111-1111-111111111111
+
+The best practice is to install a drush site from already existing configuration,
+e.g.:
+
+for Drupal 8.5-
+
+    drush si minimal --config-dir=../config/sync
+
+for Drupal 8.6+
+    
+    drush si minimal --existing-config
 
 
 # Install
@@ -215,14 +228,19 @@ See example in the Configuration section above.
 - If the new entity ID is already occupied by some existing entity, 
   it is skipped.
 - This behavior can be changed by parameter *--force-update*
+  or *--force-override*
 
 ***drush dcdi --force-update***
 
-- Existing entity (has same ID, but different UUID) is overwritten 
+- Existing entity (has same ID, but different UUID) is replaced 
 by the imported entity (the old entity is deleted and a new entity with
-the same ID is created from imported JSON file). The UUID is overwritten.
-- If the user entity is overwritten, an existing password is lost.
+the same ID is created from imported JSON file). The UUID is replaced.
+- If the user entity is replaced, an existing password is lost.
  
+***drush dcdi --force-override***
+
+- All existing content will be overridden. Locally updated default content
+will be reverted to the state defined in a content directory.
 
 ***drush dcdi --verbose***
 
@@ -234,6 +252,9 @@ the same ID is created from imported JSON file). The UUID is overwritten.
     drush dcdi --force-update
     drush dcdi --verbose
     drush dcdi --verbose --force-update
+    drush dcdi --verbose --force-override
+    drush dcdi --verbose --force-update --force-override
+    drush dcdi --force-update --force-override -y
 
 
 ### Run import process form UI

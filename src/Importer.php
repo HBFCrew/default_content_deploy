@@ -125,15 +125,20 @@ class Importer extends DCImporter {
    *
    * @param bool $force_update
    *   TRUE for overwrite entities with matching ID but different UUID.
+   * @param bool $force_override
+   *   TRUE for override all imported entities. Locally updated content
+   *   will be updated to imported version.
    * @param bool $writeEnable
    *   FALSE for read only operations, TRUE for real update/delete/create.
    *
    * @return array
    *   Array of result information.
    *
-   * @throws \Exception
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @throws \Drupal\Core\Entity\EntityStorageException
    */
-  public function deployContent($force_update = FALSE, $writeEnable = FALSE) {
+  public function deployContent($force_update = FALSE, $force_override = FALSE, $writeEnable = FALSE) {
     $this->writeEnable = $writeEnable;
     $result_info = [
       'processed' => 0,
@@ -225,6 +230,7 @@ class Importer extends DCImporter {
           }
           if ($entity_type_id == 'file') {
             // Skip entity if file_entity module is not enabled.
+            // @todo Is any possibility to detect a file normalizer for exporting file content is presented?
             if (!$this->fileEntityEnabled) {
               if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
                 $message = t("File entity skipped. If you need to import files, enable the file_entity or better_normalizers module.");
@@ -286,7 +292,8 @@ class Importer extends DCImporter {
             }
 
             // Check if destination entity is older than existing content.
-            if ($current_entity_changed_time < $entity_changed_time) {
+            // @todo Comment $force_override.
+            if ($force_override || $current_entity_changed_time < $entity_changed_time) {
               // Update existing older entity with newer one.
               if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
                 $message = t("update");

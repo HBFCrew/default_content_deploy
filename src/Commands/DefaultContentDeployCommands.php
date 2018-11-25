@@ -233,23 +233,33 @@ class DefaultContentDeployCommands extends DrushCommands {
    * @option force-update
    *   Content with different UUID but same ID will be
    *   updated (UUID will be replaced).
+   * @option force-override
+   *   All existing content will be overridden to the state
+   *   defined in a content directory.
    * @usage drush dcdi
    *   Import content. Existing older content with matching UUID will be
    *   updated. Newer content and existing content with different UUID will be
    *   ignored.
    * @usage drush dcdi --force-update
-   *   Import content but existing content with different UUID will be replaced
+   *   Existing content with different UUID will be deleted and created again
    *   (recommended for better content synchronization).
+   * @usage drush dcdi --force-override
+   *   All existing content will be overridden (locally updated default content
+   *   will be reverted to the state defined in a content directory).
    * @usage drush dcdi --verbose
    *   Print detailed information about importing entities.
    * @validate-module-enabled default_content
    * @aliases dcdi,default-content-deploy-import
    */
-  public function contentDeployImport(array $options = ['force-update' => NULL]) {
+  public function contentDeployImport(array $options = [
+    'force-update' => NULL,
+    'force-override' => NULL,
+  ]) {
     $force_update = $options['force-update'];
+    $force_override = $options['force-override'];
 
     // Perform read only update.
-    $result_info = $this->importer->deployContent($force_update, FALSE);
+    $result_info = $this->importer->deployContent($force_update, $force_override, FALSE);
     $this->output()
       ->writeln(dt('@count entities will be processed.', ['@count' => $result_info['processed']]));
     $this->displayImportResult($result_info);
@@ -260,7 +270,7 @@ class DefaultContentDeployCommands extends DrushCommands {
     }
     if ($this->io()->confirm(dt('Do you really want to continue?'))) {
       // Perform update.
-      $result_info = $this->importer->deployContent($force_update, TRUE);
+      $result_info = $this->importer->deployContent($force_update, $force_override, TRUE);
       $import_status = $this->importer->importUrlAliases();
 
       // Display results.
