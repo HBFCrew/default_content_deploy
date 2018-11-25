@@ -157,6 +157,7 @@ class Exporter extends DefaultContentDeployBase {
    *   Return array of entity ids.
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   protected function getEntityIdsForExport($entityType,
                                            $entityBundle,
@@ -179,13 +180,8 @@ class Exporter extends DefaultContentDeployBase {
       $query = $this->entityTypeManager->getStorage($entityType)->getQuery();
       $query = $query->accessCheck(FALSE);
       $bundles = explode(parent::DELIMITER, $entityBundle);
-      $bundleType = 'type';
-      if ($entityType == 'taxonomy_term') {
-        $bundleType = 'vid';
-      }
-      elseif ($entityType == 'menu_link_content') {
-        $bundleType = 'menu_name';
-      }
+      $type = $this->entityTypeManager->getDefinition($entityType);
+      $bundleType = $type->getKey('bundle');
       $query->condition($bundleType, $bundles, 'IN');
       $selectedEntityIds = $query->execute();
       $exportedEntityIds += $selectedEntityIds;
