@@ -6,6 +6,7 @@ use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\Entity;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\RevisionableInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Path\AliasStorageInterface;
@@ -138,7 +139,9 @@ class Importer extends DCImporter {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
-  public function deployContent($force_update = FALSE, $force_override = FALSE, $writeEnable = FALSE) {
+  public function deployContent($force_update = FALSE,
+                                $force_override = FALSE,
+                                $writeEnable = FALSE) {
     $this->writeEnable = $writeEnable;
     $result_info = [
       'processed' => 0,
@@ -273,6 +276,7 @@ class Importer extends DCImporter {
 
           // Test if entity (defined by UUID) already exists.
           $entityUuid = $entity->uuid();
+          /** @var \Drupal\Core\Entity\ContentEntityBase $current_entity */
           if ($current_entity = $this->loadEntityByUuid($entity_type_id, $entityUuid)) {
             // Yes, entity already exists.
             if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
@@ -299,17 +303,42 @@ class Importer extends DCImporter {
                 $message = t("update");
                 print(" - $message \t");
               }
-              /** @var \Drupal\Core\Entity\Entity $entity */
+              /** @var \Drupal\Core\Entity\ContentEntityBase $entity */
               $entity->{$entity->getEntityType()
                 ->getKey('id')} = $current_entity->id();
+              $is_same_revision = $current_entity->getRevisionId() == $entity->getRevisionId();
               $entity->setOriginalId($current_entity->id());
               $entity->enforceIsNew(FALSE);
-              try {
-                /** @var \Drupal\node\Entity\Node $entity */
+
+              if ($entity instanceof RevisionableInterface && $entity->getRevisionId() !== NULL) {
+              // if ($entity->getEntityTypeId() == 'paragraph' && $entity->getRevisionId() !== NULL) {
+                $revision_id = $entity->getRevisionId();
                 $entity->setNewRevision(FALSE);
+                // Revision key depends on type of the entity.
+                $revision_key = $entity->getEntityType()->getKey('revision');
+                $entity->set($revision_key, $revision_id);
               }
-              catch (\LogicException $e) {
+              else {
+                try {
+                  $entity->setNewRevision(FALSE);
+                  /** @var \Drupal\node\Entity\Node $entity */
+                }
+                catch (\LogicException $e) {
+                }
+
               }
+
+              // If revision id is the same between old and new entity there is
+              // no need to create another revision. For example running import
+              // several times in a row would create each time a new revision.
+              // This can result into transforming the entity into undesired
+              // state (revision id will be different than in json).
+              // Additionally this can break paragraph entities, since their
+              // revision id will be changed, but it will stay the same for the
+              // nodes where particular paragraph is referenced.
+              // if ($is_same_revision) {
+              //   $entity->set('revision_id', $current_entity->getRevisionId());
+              // }
             }
             else {
               // Skip entity. No update. Newer or the same content
