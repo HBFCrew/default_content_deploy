@@ -220,6 +220,7 @@ function drush_default_content_deploy_export_aliases() {
 function drush_default_content_deploy_import() {
   $force_update = drush_get_option('force-update');
   $force_override = drush_get_option('force-override');
+  $yes_option = drush_get_option('y');
   /** @var \Drupal\default_content_deploy\Importer $importer */
   $importer = \Drupal::service('default_content_deploy.importer');
 
@@ -235,7 +236,8 @@ function drush_default_content_deploy_import() {
     drush_print(dt('Nothing to do.'));
     return FALSE;
   }
-  if ($entities_todo == 0 || !drush_confirm(dt('Do you really want to continue?'))) {
+  $yes_option = $yes_option ? $yes_option : drush_confirm(dt('Do you really want to continue?'));
+  if (!$yes_option) {
     return drush_user_abort();
   }
   // Perform update.
