@@ -128,6 +128,8 @@ class Importer extends DCImporter {
    * @param bool $force_override
    *   TRUE for override all imported entities. Locally updated content
    *   will be updated to imported version.
+   * @param bool $preserve_password
+   *   TRUE will preserve user password.
    * @param bool $writeEnable
    *   FALSE for read only operations, TRUE for real update/delete/create.
    *
@@ -138,7 +140,7 @@ class Importer extends DCImporter {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
-  public function deployContent($force_update = FALSE, $force_override = FALSE, $writeEnable = FALSE) {
+  public function deployContent($force_update = FALSE, $force_override = FALSE, $preserve_password = FALSE, $writeEnable = FALSE) {
     $this->writeEnable = $writeEnable;
     $result_info = [
       'processed' => 0,
@@ -292,9 +294,10 @@ class Importer extends DCImporter {
             }
 
             // Check if destination entity is older than existing content.
-            // @todo Comment $force_override.
+            // If --force-override option is used, all existing content
+            // will be overridden with content being imported from JSON files.
             if ($force_override || $current_entity_changed_time < $entity_changed_time) {
-              // Update existing older entity with newer one.
+              // Update existing entity.
               if (function_exists('drush_get_context') && drush_get_context('DRUSH_VERBOSE')) {
                 $message = t("update");
                 print(" - $message \t");
@@ -304,6 +307,11 @@ class Importer extends DCImporter {
                 ->getKey('id')} = $current_entity->id();
               $entity->setOriginalId($current_entity->id());
               $entity->enforceIsNew(FALSE);
+              if ($entity_type_id == 'user' && $preserve_password) {
+                // Set existing password if --preserve-password options are used.
+                /** @var \Drupal\user\Entity\User $entity */
+                $entity->setPassword($current_entity->getPassword());
+              }
               try {
                 /** @var \Drupal\node\Entity\Node $entity */
                 $entity->setNewRevision(FALSE);

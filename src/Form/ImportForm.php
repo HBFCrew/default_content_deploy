@@ -76,6 +76,12 @@ class ImportForm extends FormBase {
       '#description' => $this->t('All existing content will be overridden (locally updated default content will be reverted to the state defined in a content directory).'),
       '#default_value' => FALSE,
     ];
+    $form['preserve-password'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Preserve password'),
+      '#description' => $this->t('Updating users will keep their existing passwords.'),
+      '#default_value' => FALSE,
+    ];
 
     $form['import'] = [
       '#type' => 'submit',
@@ -98,7 +104,8 @@ class ImportForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $forceUpdate = $form_state->getValue('force-update', FALSE);
     $forceOverride = $form_state->getValue('force-override', FALSE);
-    $result_info = $this->importer->deployContent($forceUpdate, $forceOverride, TRUE);
+    $preservePassword = $form_state->getValue('preserve-password', FALSE);
+    $result_info = $this->importer->deployContent($forceUpdate, $forceOverride, $preservePassword, TRUE);
 
     $message = $this->t('@count entities have been imported.', ['@count' => $result_info['processed']]);
     $message .= " ";
