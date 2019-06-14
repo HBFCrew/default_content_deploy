@@ -4,20 +4,16 @@ namespace Drupal\default_content_deploy;
 
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Session\UserSession;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\default_content\Exporter;
-use Psr\Log\LoggerAwareTrait;
-use Robo\Robo;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Serializer\Serializer;
 
 /**
  * A service for handling import and export of default content.
  */
 class DefaultContentDeployBase {
-
-  use LoggerAwareTrait;
 
   const DELIMITER = ',';
 
@@ -38,6 +34,11 @@ class DefaultContentDeployBase {
   protected $accountSwitcher;
 
   /**
+   * @var \Psr\Log\LoggerInterface
+   */
+  protected $logger;
+
+  /**
    * DefaultContentDeployBase constructor.
    *
    * @param \Drupal\Core\Database\Connection $database
@@ -52,31 +53,23 @@ class DefaultContentDeployBase {
    *   Serializer.
    * @param \Drupal\Core\Session\AccountSwitcherInterface
    *   The account switcher service.
+   * @param \Psr\Log\LoggerInterface $logger
+   *   Logger.
    */
   public function __construct(Connection $database,
                               Exporter $exporter,
                               Settings $settings,
                               EntityTypeManagerInterface $entityTypeManager,
                               Serializer $serializer,
-                              AccountSwitcherInterface $account_switcher) {
+                              AccountSwitcherInterface $account_switcher,
+                              LoggerInterface $logger) {
     $this->database = $database;
     $this->exporter = $exporter;
     $this->settings = $settings;
     $this->entityTypeManager = $entityTypeManager;
     $this->serializer = $serializer;
     $this->accountSwitcher = $account_switcher;
-  }
-
-  /**
-   * Logger.
-   *
-   * @inheritdoc
-   */
-  public function logger() {
-    if ($this->logger) {
-      return $this->logger;
-    }
-    return Robo::logger();
+    $this->logger = $logger;
   }
 
   /**
@@ -88,14 +81,14 @@ class DefaultContentDeployBase {
    * If no configuration is found, directory is created
    * automatically at public://content_{hash_salt_derived_key};
    *
-   * @example Recommended usage:
-   *   $settings['default_content_deploy_content_directory'] = '../content';
+   * @return string
+   *   Return path to the content folder.
    * @example Backward compatibility usage:
    *   $config_directories['content_directory'] = '../content';
    *   $config['content_directory'] = '../content';
    *
-   * @return string
-   *   Return path to the content folder.
+   * @example Recommended usage:
+   *   $settings['default_content_deploy_content_directory'] = '../content';
    */
   public function getContentFolder() {
     global $config;
@@ -114,14 +107,12 @@ class DefaultContentDeployBase {
 
     if (isset($config) && isset($config['content_directory'])) {
       $contentDir = $config['content_directory'];
-      $this->logger()
-        ->warning(dt('Using $config["content_directory"] is deprecated. Use $settings["default_content_deploy_content_directory"] in your settings.php.'));
+      $this->logger->warning(t('Using $config["content_directory"] is deprecated. Use $settings["default_content_deploy_content_directory"] in your settings.php.'));
       return $contentDir;
     }
     try {
       $contentDir = config_get_config_directory('content_directory');
-      $this->logger()
-        ->warning(dt('Use $config_directories["content_directory"] is deprecated. Use $settings["default_content_deploy_content_directory"] in your settings.php.'));
+      $this->logger->warning(t('Use $config_directories["content_directory"] is deprecated. Use $settings["default_content_deploy_content_directory"] in your settings.php.'));
       return $contentDir;
     }
     catch (\Exception $exception) {

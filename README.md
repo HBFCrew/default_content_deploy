@@ -222,7 +222,7 @@ See example in the Configuration section above.
   (by timestamp of the last entity change).
   - The user entity update causes lose of the user password
   because it is not present in the imported JSON file. 
-  You can preserve the existing user password using the --preserve-password option.
+  You can preserve the existing user password using the *--preserve-password* option.
 - Imported entity with the same or older time 
   than the current existing entity is skipped.
 - If a file entity does not have an existing file, the file will be created.
