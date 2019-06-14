@@ -7,13 +7,13 @@ use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\Entity;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Path\AliasStorageInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\default_content\Importer as DCImporter;
 use Drupal\default_content\ScannerInterface;
 use Drupal\hal\LinkManager\LinkManagerInterface;
 use Drupal\user\EntityOwnerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Serializer\Serializer;
 
@@ -89,8 +89,8 @@ class Importer extends DCImporter {
    *   DefaultContentDeployBase.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler service.
-   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
-   *   The logger factory service.
+   * @param \Psr\Log\LoggerInterface $logger
+   *   Logger.
    * @param \Drupal\Core\Path\AliasStorageInterface $path_alias_storage
    *   The path alias storage service.
    */
@@ -103,12 +103,12 @@ class Importer extends DCImporter {
                               AccountSwitcherInterface $account_switcher,
                               DefaultContentDeployBase $dcdBase,
                               ModuleHandlerInterface $module_handler,
-                              LoggerChannelFactoryInterface $logger_factory,
+                              LoggerInterface $logger,
                               AliasStorageInterface $path_alias_storage) {
     parent::__construct($serializer, $entity_type_manager, $link_manager, $event_dispatcher, $scanner, $link_domain, $account_switcher);
     $this->dcdBase = $dcdBase;
     $this->moduleHandler = $module_handler;
-    $this->logger = $logger_factory->get('default_content_deploy');
+    $this->logger = $logger;
     $this->pathAliasStorage = $path_alias_storage;
     $this->fileEntityEnabled = (
       $this->moduleHandler->moduleExists('file_entity') ||
