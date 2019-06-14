@@ -236,6 +236,8 @@ class DefaultContentDeployCommands extends DrushCommands {
    * @option force-override
    *   All existing content will be overridden to the state
    *   defined in a content directory.
+   * @option preserve-password
+   *   Preserve existing user password.
    * @usage drush dcdi
    *   Import content. Existing older content with matching UUID will be
    *   updated. Newer content and existing content with different UUID will be
@@ -246,6 +248,8 @@ class DefaultContentDeployCommands extends DrushCommands {
    * @usage drush dcdi --force-override
    *   All existing content will be overridden (locally updated default content
    *   will be reverted to the state defined in a content directory).
+   * @usage drush dcdi --preserve-password
+   *   Updated user entities will keep their existing passwords.
    * @usage drush dcdi --verbose
    *   Print detailed information about importing entities.
    * @validate-module-enabled default_content
@@ -254,12 +258,14 @@ class DefaultContentDeployCommands extends DrushCommands {
   public function contentDeployImport(array $options = [
     'force-update' => NULL,
     'force-override' => NULL,
+    'preserve-password' => NULL,
   ]) {
     $force_update = $options['force-update'];
     $force_override = $options['force-override'];
+    $preserve_password = $options['preserve-password'];
 
     // Perform read only update.
-    $result_info = $this->importer->deployContent($force_update, $force_override, FALSE);
+    $result_info = $this->importer->deployContent($force_update, $force_override, $preserve_password, FALSE);
     $this->output()
       ->writeln(dt('@count entities will be processed.', ['@count' => $result_info['processed']]));
     $this->displayImportResult($result_info);
@@ -270,7 +276,7 @@ class DefaultContentDeployCommands extends DrushCommands {
     }
     if ($this->io()->confirm(dt('Do you really want to continue?'))) {
       // Perform update.
-      $result_info = $this->importer->deployContent($force_update, $force_override, TRUE);
+      $result_info = $this->importer->deployContent($force_update, $force_override, $preserve_password, TRUE);
       $import_status = $this->importer->importUrlAliases();
 
       // Display results.

@@ -216,15 +216,20 @@ function drush_default_content_deploy_export_aliases() {
  * @example drush dcdi --verbose
  * @example drush dcdi --verbose --force-update
  * @example drush dcdi --verbose --force-override
+ * @example drush dcdi --force-override --preserve-password
  */
 function drush_default_content_deploy_import() {
   $force_update = drush_get_option('force-update');
   $force_override = drush_get_option('force-override');
+  $preserve_password = drush_get_option('preserve-password');
+
+  $yes_option = drush_get_option('y');
   /** @var \Drupal\default_content_deploy\Importer $importer */
   $importer = \Drupal::service('default_content_deploy.importer');
 
   // Perform read only update.
-  $result_info = $importer->deployContent($force_update, $force_override, FALSE);
+  $result_info = $importer->deployContent($force_update, $force_override, $preserve_password, FALSE);
+
   drush_print(dt('@count entities will be processed.', ['@count' => $result_info['processed']]));
   drush_print(dt('- created: @count', ['@count' => $result_info['created']]));
   drush_print(dt('- updated: @count', ['@count' => $result_info['updated']]));
@@ -235,11 +240,13 @@ function drush_default_content_deploy_import() {
     drush_print(dt('Nothing to do.'));
     return FALSE;
   }
-  if ($entities_todo == 0 || !drush_confirm(dt('Do you really want to continue?'))) {
+  $yes_option = $yes_option ? $yes_option : drush_confirm(dt('Do you really want to continue?'));
+  if (!$yes_option) {
     return drush_user_abort();
   }
   // Perform update.
-  $result_info = $importer->deployContent($force_update, $force_override, TRUE);
+  $result_info = $importer->deployContent($force_update, $force_override, $preserve_password, TRUE);
+
   $import_status = $importer->importUrlAliases();
 
   // Display results.

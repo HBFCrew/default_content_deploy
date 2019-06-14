@@ -220,6 +220,9 @@ See example in the Configuration section above.
 - Non-existing entity (the new one) is created with exported ID.
 - Existing entity is updated only if imported entity is newer 
   (by timestamp of the last entity change).
+  - The user entity update causes lose of the user password
+  because it is not present in the imported JSON file. 
+  You can preserve the existing user password using the --preserve-password option.
 - Imported entity with the same or older time 
   than the current existing entity is skipped.
 - If a file entity does not have an existing file, the file will be created.
@@ -254,6 +257,7 @@ will be reverted to the state defined in a content directory.
     drush dcdi --verbose --force-update
     drush dcdi --verbose --force-override
     drush dcdi --verbose --force-update --force-override
+    drush dcdi --verbose --force-update --force-override --preserve-password
     drush dcdi --force-update --force-override -y
 
 
